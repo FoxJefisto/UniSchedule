@@ -18,24 +18,8 @@ namespace UniShedule
 
         public async Task<string> GetStringAsync(string uri)
         {
-            await Task.Delay(2000);
             var result = await client.GetAsync(uri);
-            for (int i = 1; i < 1000 && !result.IsSuccessStatusCode; i++)
-            {
-                await Task.Delay(i * 2000);
-                result = await client.GetAsync(uri);
-                if (result.IsSuccessStatusCode)
-                    break;
-            }
-            if (!result.IsSuccessStatusCode)
-            {
-                throw new Exception($"Get request failed: {uri}");
-            }
             var resultedContent = await result.Content.ReadAsStringAsync();
-            if (string.IsNullOrEmpty(resultedContent))
-            {
-                throw new Exception("Nothing to return");
-            }
             return resultedContent;
         }
     }

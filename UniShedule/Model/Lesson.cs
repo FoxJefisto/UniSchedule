@@ -14,7 +14,7 @@ namespace UniShedule.Model
         public string Type { get; set; }
         public string Place { get; set; }
         public string Members { get; set; }
-        public ICollection<Group> Groups { get; set; }
+        public Group Group { get; set; }
         public string Teacher { get; set; }
 
     }

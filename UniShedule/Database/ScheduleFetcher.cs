@@ -4,15 +4,25 @@ using System.Text;
 
 namespace UniShedule.Database
 {
-    public class Database
+    public class ScheduleFetcher
     {
         private MpeiApi api;
-        private static Database instance;
-        public static Database GetInstance()
+        private static ScheduleFetcher instance;
+        public static ScheduleFetcher GetInstance()
         {
             if (instance == null)
-                instance = new Database();
+                instance = new ScheduleFetcher();
             return instance;
+        }
+
+        public void SaveLessons(List<string> groupsName)
+        {
+            var lessons = api.GetAllLessons(groupsName);
+            using (Context db = new Context())
+            {
+                db.Lessons.AddRange(lessons);
+                db.SaveChanges();
+            }
         }
 
         public void SaveLessons(string groupName)
@@ -30,7 +40,7 @@ namespace UniShedule.Database
             //TODO: Доделать удаление таблицы
         }
 
-        private Database()
+        private ScheduleFetcher()
         {
             api = MpeiApi.GetInstance();
         }

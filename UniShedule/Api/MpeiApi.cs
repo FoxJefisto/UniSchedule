@@ -6,193 +6,246 @@ using HtmlAgilityPack;
 using UniShedule.Model;
 using System.Text.RegularExpressions;
 using System.Threading;
+using OpenQA.Selenium.IE;
+using OpenQA.Selenium.Support.UI;
 
 namespace UniShedule
 {
-	class MpeiApi 
-	{
-		private string mainUrl;
-		private string nodeBtnPath;
-		private IWebDriver driver;
-		private static MpeiApi instance;
-		private static RestClient restClient;
+    class MpeiApi
+    {
+        private string mainUrl;
+        private string nodeBtnPath;
+        private IWebDriver driver;
+        private static MpeiApi instance;
+        private static RestClient restClient;
 
-		public static MpeiApi GetInstance()
-		{
-			if (instance == null)
-				instance = new MpeiApi();
-			return instance;
-		}
+        public static MpeiApi GetInstance()
+        {
+            if (instance == null)
+                instance = new MpeiApi();
+            return instance;
+        }
 
-		private MpeiApi()
-		{
-			mainUrl = @"https://mpei.ru/Education/timetable/Pages/default.aspx";
-			nodeBtnPath = @"//div[@class='mpei-galaktika-group-form-control']";
-			restClient = new RestClient();
-		}
+        private MpeiApi()
+        {
+            mainUrl = @"https://mpei.ru/Education/timetable/Pages/default.aspx";
+            nodeBtnPath = @"//div[@class='mpei-galaktika-group-form-control']";
+            restClient = new RestClient();
+        }
 
-		private string GetUrlShedule(string groupName)
-		{
-			driver = new EdgeDriver();
-			driver.Navigate().GoToUrl(mainUrl);
-			Thread.Sleep(2000);
-			IWebElement element = driver.FindElement(By.XPath($"{nodeBtnPath}/input[@placeholder='Введите название группы']"));
-			element.SendKeys(groupName);
-			element = driver.FindElement(By.XPath($"{nodeBtnPath}/input[@type='submit']"));
-			element.Click();
-			string url = driver.Url;
-			driver.Close();
-			return url;
-		}
-
-		public List<Lesson> GetAllLessons(string groupName)
-		{
-			var url = GetUrlShedule(groupName);
-			int groupId = Convert.ToInt32(Regex.Match(url, @"groupoid=(\d+)").Groups[1].Value);
-			Model.Group group = new Model.Group() { GroupId = groupId, Name = groupName}; 
-			GetStartDates(out var startDate, out var limitDate);
-			var currentDate = startDate;
-			var lessons = new List<Lesson>();
-			while (currentDate < limitDate)
-			{
-				lessons.AddRange(GetWeekLessons(url, group, currentDate));
-				currentDate = currentDate.AddDays(7);
-				Console.WriteLine($"Занятий добавлено: {lessons.Count}");
-				Thread.Sleep(1000);
-			}
-			return lessons;
-		}
-
-		private void GetStartDates(out DateTime startDate,out DateTime limitDate)
-		{
-			int startYear = DateTime.Now.Year;
-			int startMonth, startDay;
-			if (DateTime.Today.Month >= 8 || DateTime.Today.Month <= 1)
-			{
-				startMonth = 9;
-				startDay = 1;
-				if (DateTime.Today.Month <= 1)
-					startYear--;
-				limitDate = new DateTime(startYear + 1, 1, 31);
-			}
-			else
-			{
-				startMonth = 2;
-				startDay = 1;
-				limitDate = new DateTime(startYear, 07, 15);
-			}
-			startDate = new DateTime(startYear, startMonth, startDay);
-		}
-
-		private List<Lesson> GetWeekLessons(string url, Model.Group group, DateTime currentDate)
-		{
-			var html = GetHTMLString(url + $"&start={currentDate.ToString("yyyy.MM.dd")}");
-			var doc = new HtmlDocument();
-			doc.LoadHtml(html);
-			var table = doc.DocumentNode.SelectNodes(".//table[@class='mpei-galaktika-lessons-grid-tbl']//tr");
-			var lessons = new List<Lesson>();
-			var lesson = new Lesson();
-			var dateInfo = new DateInfo();
-			string lessonTime = null;
-			foreach (var row in table)
-			{
-				var rowDate = row.SelectSingleNode("./td[@class='mpei-galaktika-lessons-grid-date']");
-				if (rowDate != null)
-				{
-					dateInfo = ParseDate(rowDate.InnerText, currentDate);
-					currentDate = dateInfo.Date.Date;
-					continue;
-				}
+        private List<string> GetUrlShedule(List<string> groupsName)
+        {
+            driver = new EdgeDriver();
+            driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(5);
+            var urls = new List<string>();
+            foreach (var groupName in groupsName)
+            {
+                driver.Navigate().GoToUrl(mainUrl);
+                Thread.Sleep(2000);
+                IWebElement element = driver.FindElement(By.XPath($"{nodeBtnPath}/input[@placeholder='Введите название группы']"));
+                element.SendKeys(groupName);
+                element = driver.FindElement(By.XPath($"{nodeBtnPath}/input[@type='submit']"));
+                element.Click();
+                urls.Add(driver.Url);
+            }
+            driver.Close();
+            return urls;
+        }
 
 
-				var rowTime = row.SelectSingleNode("./td[@class='mpei-galaktika-lessons-grid-time']");
-				if (rowTime != null)
-				{
-					lessonTime = rowTime.InnerText;
-				}
-				var rowLesson = row.SelectSingleNode("./td[@class='mpei-galaktika-lessons-grid-day']");
-				if (rowLesson != null)
-				{
-					lesson = new Lesson();
-					lesson.Time = lessonTime;
-					lesson.Groups = new List<Model.Group>() { group };
-					lesson.Date = dateInfo;
-					var rowLessonName = row.SelectSingleNode(".//span[@class='mpei-galaktika-lessons-grid-name']");
-					if (rowLessonName != null)
-					{
-						lesson.Name = rowLessonName.InnerText;
-					}
-					var rowLessonType = row.SelectSingleNode(".//span[@class='mpei-galaktika-lessons-grid-type']");
-					if (rowLessonType != null)
-					{
-						lesson.Type = rowLessonType.InnerText;
-					}
-					var rowLessonPlace = row.SelectSingleNode(".//span[@class='mpei-galaktika-lessons-grid-room']");
-					if (rowLessonPlace != null)
-					{
-						lesson.Place = rowLessonPlace.InnerText;
-					}
-					var rowLessonMembers = row.SelectSingleNode(".//span[@class='mpei-galaktika-lessons-grid-grp']");
-					if (rowLessonMembers != null)
-					{
-						lesson.Members = rowLessonMembers.InnerText;
-					}
-					var rowLessonTeacher = row.SelectSingleNode(".//span[@class='mpei-galaktika-lessons-grid-pers']");
-					if (rowLessonTeacher != null)
-					{
-						lesson.Teacher = rowLessonTeacher.InnerText;
-					}
-					lessons.Add(lesson);
-				}
-			}
-			return lessons;
-		}
 
-		private DateInfo ParseDate(string rowInfo, DateTime currentDate)
-		{
-			var matchDate = Regex.Match(rowInfo, @"([А-Яа-я]+), (\d+) ([А-Яа-я]+)");
-			var dateName = matchDate.Groups[1].Value switch
-			{
-				"Пн" => "Понедельник",
-				"Вт" => "Вторник",
-				"Ср" => "Среда",
-				"Чт" => "Четверг",
-				"Пт" => "Пятница",
-				"Сб" => "Суббота",
-				"Вс" => "Воскресенье",
-				_ => null
-			};
-			int month = matchDate.Groups[3].Value switch
-			{
-				"января" => 1,
-				"февраля" => 2,
-				"марта" => 3,
-				"апреля" => 4,
-				"мая" => 5,
-				"июня" => 6,
-				"июля" => 7,
-				"августа" => 8,
-				"сентября" => 9,
-				"октября" => 10,
-				"ноября" => 11,
-				"декабря" => 12,
-				_ => 0
-			};
-			int year = currentDate.Year, day = Convert.ToInt32(matchDate.Groups[2].Value);
-			if (currentDate.Month == 12 && month == 1)
-				year++;
-			var date = new DateTime(year, month, day);
-			return new DateInfo
-			{
-				Date = date,
-				DateWeekName = dateName
-			};
-		}
+        private string GetUrlShedule(string groupName)
+        {
+            driver = new EdgeDriver();
+            driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(5);
+            string url;
+            try
+            {
+                driver.Navigate().GoToUrl(mainUrl);
+            }
+            catch(WebDriverTimeoutException ex)
+            {
+                Console.WriteLine(ex.Message);
+                return GetUrlShedule(groupName);
+            }
+            IWebElement element = driver.FindElement(By.XPath($"{nodeBtnPath}/input[@placeholder='Введите название группы']"));
+            element.SendKeys(groupName);
+            element = driver.FindElement(By.XPath($"{nodeBtnPath}/input[@type='submit']"));
+            element.Click();
+            url = driver.Url;
+            driver.Close();
+            return url;
+        }
 
-		private string GetHTMLString(string url)
-		{
-			return restClient.GetStringAsync(url).GetAwaiter().GetResult();
-		}
+        public List<Lesson> GetAllLessons(string groupName)
+        {
+            var url = GetUrlShedule(groupName);
+            var lessons = new List<Lesson>();
+            int groupId = Convert.ToInt32(Regex.Match(url, @"groupoid=(\d+)").Groups[1].Value);
+            Model.Group group = new Model.Group() { GroupId = groupId, Name = groupName };
+            GetStartDates(out var startDate, out var limitDate);
+            var currentDate = startDate;
+            while (currentDate < limitDate)
+            {
+                lessons.AddRange(GetWeekLessons(url, group, currentDate));
+                currentDate = currentDate.AddDays(7);
+                Console.WriteLine($"Занятий схвачено: {lessons.Count}");
+                Thread.Sleep(1000);
+            }
+            return lessons;
+        }
 
-	}
+        public List<Lesson> GetAllLessons(List<string> groupsName)
+        {
+            var urls = GetUrlShedule(groupsName);
+            var lessons = new List<Lesson>();
+            for (int i = 0; i < groupsName.Count; i++)
+            {
+                int groupId = Convert.ToInt32(Regex.Match(urls[i], @"groupoid=(\d+)").Groups[1].Value);
+                Model.Group group = new Model.Group() { GroupId = groupId, Name = groupsName[i] };
+                GetStartDates(out var startDate, out var limitDate);
+                var currentDate = startDate;
+                while (currentDate < limitDate)
+                {
+                    lessons.AddRange(GetWeekLessons(urls[i], group, currentDate));
+                    currentDate = currentDate.AddDays(7);
+                    Console.WriteLine($"Занятий схвачено: {lessons.Count}");
+                    Thread.Sleep(1000);
+                }
+            }
+            return lessons;
+        }
+
+        private void GetStartDates(out DateTime startDate, out DateTime limitDate)
+        {
+            int startYear = DateTime.Now.Year;
+            int startMonth, startDay;
+            if (DateTime.Today.Month >= 8 || DateTime.Today.Month <= 1)
+            {
+                startMonth = 9;
+                startDay = 1;
+                if (DateTime.Today.Month <= 1)
+                    startYear--;
+                limitDate = new DateTime(startYear + 1, 1, 31);
+            }
+            else
+            {
+                startMonth = 2;
+                startDay = 1;
+                limitDate = new DateTime(startYear, 07, 15);
+            }
+            startDate = new DateTime(startYear, startMonth, startDay);
+        }
+
+        private List<Lesson> GetWeekLessons(string url, Model.Group group, DateTime currentDate)
+        {
+            var html = GetHTMLString(url + $"&start={currentDate.ToString("yyyy.MM.dd")}");
+            var doc = new HtmlDocument();
+            doc.LoadHtml(html);
+            var table = doc.DocumentNode.SelectNodes(".//table[@class='mpei-galaktika-lessons-grid-tbl']//tr");
+            var lessons = new List<Lesson>();
+            var lesson = new Lesson();
+            var dateInfo = new DateInfo();
+            string lessonTime = null;
+            foreach (var row in table)
+            {
+                var rowDate = row.SelectSingleNode("./td[@class='mpei-galaktika-lessons-grid-date']");
+                if (rowDate != null)
+                {
+                    dateInfo = ParseDate(rowDate.InnerText, currentDate);
+                    currentDate = dateInfo.Date.Date;
+                    continue;
+                }
+
+
+                var rowTime = row.SelectSingleNode("./td[@class='mpei-galaktika-lessons-grid-time']");
+                if (rowTime != null)
+                {
+                    lessonTime = rowTime.InnerText;
+                }
+                var rowLesson = row.SelectSingleNode("./td[@class='mpei-galaktika-lessons-grid-day']");
+                if (rowLesson != null)
+                {
+                    lesson = new Lesson();
+                    lesson.Time = lessonTime;
+                    lesson.Group = group;
+                    lesson.Date = dateInfo;
+                    var rowLessonName = row.SelectSingleNode(".//span[@class='mpei-galaktika-lessons-grid-name']");
+                    if (rowLessonName != null)
+                    {
+                        lesson.Name = rowLessonName.InnerText;
+                    }
+                    var rowLessonType = row.SelectSingleNode(".//span[@class='mpei-galaktika-lessons-grid-type']");
+                    if (rowLessonType != null)
+                    {
+                        lesson.Type = rowLessonType.InnerText;
+                    }
+                    var rowLessonPlace = row.SelectSingleNode(".//span[@class='mpei-galaktika-lessons-grid-room']");
+                    if (rowLessonPlace != null)
+                    {
+                        lesson.Place = rowLessonPlace.InnerText;
+                    }
+                    var rowLessonMembers = row.SelectSingleNode(".//span[@class='mpei-galaktika-lessons-grid-grp']");
+                    if (rowLessonMembers != null)
+                    {
+                        lesson.Members = rowLessonMembers.InnerText;
+                    }
+                    var rowLessonTeacher = row.SelectSingleNode(".//span[@class='mpei-galaktika-lessons-grid-pers']");
+                    if (rowLessonTeacher != null)
+                    {
+                        lesson.Teacher = rowLessonTeacher.InnerText;
+                    }
+                    lessons.Add(lesson);
+                }
+            }
+            return lessons;
+        }
+
+        private DateInfo ParseDate(string rowInfo, DateTime currentDate)
+        {
+            var matchDate = Regex.Match(rowInfo, @"([А-Яа-я]+), (\d+) ([А-Яа-я]+)");
+            var dateName = matchDate.Groups[1].Value switch
+            {
+                "Пн" => "Понедельник",
+                "Вт" => "Вторник",
+                "Ср" => "Среда",
+                "Чт" => "Четверг",
+                "Пт" => "Пятница",
+                "Сб" => "Суббота",
+                "Вс" => "Воскресенье",
+                _ => null
+            };
+            int month = matchDate.Groups[3].Value switch
+            {
+                "января" => 1,
+                "февраля" => 2,
+                "марта" => 3,
+                "апреля" => 4,
+                "мая" => 5,
+                "июня" => 6,
+                "июля" => 7,
+                "августа" => 8,
+                "сентября" => 9,
+                "октября" => 10,
+                "ноября" => 11,
+                "декабря" => 12,
+                _ => 0
+            };
+            int year = currentDate.Year, day = Convert.ToInt32(matchDate.Groups[2].Value);
+            if (currentDate.Month == 12 && month == 1)
+                year++;
+            var date = new DateTime(year, month, day);
+            return new DateInfo
+            {
+                Date = date,
+                DateWeekName = dateName
+            };
+        }
+
+        private string GetHTMLString(string url)
+        {
+            return restClient.GetStringAsync(url).GetAwaiter().GetResult();
+        }
+
+    }
 }

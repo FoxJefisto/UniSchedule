@@ -19,21 +19,6 @@ namespace UniShedule.Migrations
                 .HasAnnotation("ProductVersion", "5.0.17")
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-            modelBuilder.Entity("GroupLesson", b =>
-                {
-                    b.Property<int>("GroupsId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("LessonsId")
-                        .HasColumnType("int");
-
-                    b.HasKey("GroupsId", "LessonsId");
-
-                    b.HasIndex("LessonsId");
-
-                    b.ToTable("GroupLesson");
-                });
-
             modelBuilder.Entity("UniShedule.Model.DateInfo", b =>
                 {
                     b.Property<int>("Id")
@@ -80,6 +65,9 @@ namespace UniShedule.Migrations
                     b.Property<int?>("DateId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("GroupId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Members")
                         .HasColumnType("nvarchar(max)");
 
@@ -102,22 +90,34 @@ namespace UniShedule.Migrations
 
                     b.HasIndex("DateId");
 
+                    b.HasIndex("GroupId");
+
                     b.ToTable("Lessons");
                 });
 
-            modelBuilder.Entity("GroupLesson", b =>
+            modelBuilder.Entity("UniShedule.Model.User", b =>
                 {
-                    b.HasOne("UniShedule.Model.Group", null)
-                        .WithMany()
-                        .HasForeignKey("GroupsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.Property<long>("Id")
+                        .HasColumnType("bigint");
 
-                    b.HasOne("UniShedule.Model.Lesson", null)
-                        .WithMany()
-                        .HasForeignKey("LessonsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.Property<DateTime>("CurrentDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("FirstName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("GroupName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LastName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserCommand")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("UniShedule.Model.Lesson", b =>
@@ -126,10 +126,21 @@ namespace UniShedule.Migrations
                         .WithMany("Lessons")
                         .HasForeignKey("DateId");
 
+                    b.HasOne("UniShedule.Model.Group", "Group")
+                        .WithMany("Lessons")
+                        .HasForeignKey("GroupId");
+
                     b.Navigation("Date");
+
+                    b.Navigation("Group");
                 });
 
             modelBuilder.Entity("UniShedule.Model.DateInfo", b =>
+                {
+                    b.Navigation("Lessons");
+                });
+
+            modelBuilder.Entity("UniShedule.Model.Group", b =>
                 {
                     b.Navigation("Lessons");
                 });

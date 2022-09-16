@@ -12,9 +12,13 @@ namespace UniShedule.Database
         {
             optionsBuilder.UseSqlServer("Server=.\\SQLEXPRESS; DATABASE=UniSheduleDB; Trusted_Connection=True");
         }
+
         public DbSet<Lesson> Lessons { get; set; }
         public DbSet<DateInfo> DateInfos { get; set; }
         public DbSet<Group> Groups { get; set; }
+        public DbSet<User> Users { get; set; }
+
+
 
     }
 }

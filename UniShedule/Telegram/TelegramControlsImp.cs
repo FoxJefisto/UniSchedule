@@ -11,10 +11,11 @@ namespace UniShedule.Telegram
                     new KeyboardButton[][]
                     {
                         new KeyboardButton[] { "Показать расписание на сегодня" },
-                        new KeyboardButton[] { "Задать название группы" },
-                        new KeyboardButton[] { "Задать дату" },
-                        new KeyboardButton[] { "Показать расписание в определенный день" }
-                    })
+                        new KeyboardButton[] { "Задать название группы", "Задать дату" },
+                        new KeyboardButton[] { "Показать расписание в определенный день" },
+                        new KeyboardButton[] { "Список загруженных групп" }
+                    }
+                    )
         {
             ResizeKeyboard = true
         };

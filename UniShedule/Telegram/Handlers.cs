@@ -95,6 +95,7 @@ namespace Telegram.Bot.Examples.Echo
                         "Задать название группы" => SetGroupName(botClient, message),
                         "Задать дату" => SetDate(botClient, message),
                         "Показать расписание в определенный день" => GetSchedule(botClient, message),
+                        "Список загруженных групп" => GetGroups(botClient, message),
                         _ => Usage(botClient, message)
                     };
                 }
@@ -159,7 +160,7 @@ namespace Telegram.Bot.Examples.Echo
         {
             var user = await dbManager.GetUserInfoAsync(message.From.Id);
             user.UserCommand = UserCommands.None.ToString();
-            user.GroupName = message.Text;
+            user.GroupName = message.Text.ToUpper();
             await dbManager.ChangeUserInfo(user);
             var isCorrectGroupName = await dbManager.CheckGroupNameAsync(user.GroupName);
             if (isCorrectGroupName)
@@ -249,6 +250,15 @@ namespace Telegram.Bot.Examples.Echo
                                         photo: new InputOnlineFile(fileStream),
                                         replyMarkup: impControls.ikmDaySwitcher);
             }
+        }
+
+        static async Task<Message> GetGroups(ITelegramBotClient botClient, Message message)
+        {
+            var groups = await dbManager.GetGroupsAsync();
+            var result = "Группы:\n" + string.Join("\n", groups);
+            return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                            text: result,
+                                            replyMarkup: impControls.rkmMainMenu);
         }
 
         static async Task<Message> FetchNewGroup(ITelegramBotClient botClient, Message message)

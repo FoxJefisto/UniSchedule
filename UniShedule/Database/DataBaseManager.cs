@@ -100,5 +100,13 @@ namespace UniShedule.Database
                 }
             }
         }
+
+        public async Task<List<string>> GetGroupsAsync()
+        {
+            using (Context db = new Context())
+            {
+                return await Task.Run(() => db.Groups.Select(x => x.Name).OrderBy(x => x).ToList());
+            }
+        }
     }
 }

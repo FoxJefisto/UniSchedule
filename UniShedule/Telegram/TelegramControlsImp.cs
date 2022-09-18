@@ -11,7 +11,7 @@ namespace UniShedule.Telegram
                     new KeyboardButton[][]
                     {
                         new KeyboardButton[] { "Показать расписание на сегодня" },
-                        new KeyboardButton[] { "Задать название группы", "Задать дату" },
+                        new KeyboardButton[] { "Задать название группы"},
                         new KeyboardButton[] { "Показать расписание в определенный день" },
                         new KeyboardButton[] { "Список загруженных групп" }
                     }
@@ -39,8 +39,16 @@ namespace UniShedule.Telegram
                                     }
         });
 
+        public InlineKeyboardMarkup ikmShowGroups = new InlineKeyboardMarkup(new[]
+                        {
+                                    new []
+                                    {
+                                        InlineKeyboardButton.WithCallbackData("Группы", "ShowGroups"),
+                                    }
+        });
+
         public string usage = "Использование:\n" +
                                      "/openmenu   - открыть главное меню\n" +
-                                     "/closemenu   - закрыть главной меню\n";
+                                     "/closemenu   - закрыть главное меню\n";
     }
 }

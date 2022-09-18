@@ -10,7 +10,7 @@ using UniShedule.Database;
 namespace UniShedule.Migrations
 {
     [DbContext(typeof(Context))]
-    [Migration("20220916211145_first")]
+    [Migration("20220917173732_first")]
     partial class first
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -42,11 +42,6 @@ namespace UniShedule.Migrations
             modelBuilder.Entity("UniShedule.Model.Group", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<int>("GroupId")
                         .HasColumnType("int");
 
                     b.Property<string>("Name")

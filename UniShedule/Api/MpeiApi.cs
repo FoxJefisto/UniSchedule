@@ -66,6 +66,7 @@ namespace UniShedule
             catch(WebDriverTimeoutException ex)
             {
                 Console.WriteLine(ex.Message);
+                driver.Close();
                 return GetUrlShedule(groupName);
             }
             IWebElement element = driver.FindElement(By.XPath($"{nodeBtnPath}/input[@placeholder='Введите название группы']"));
@@ -81,8 +82,13 @@ namespace UniShedule
         {
             var url = GetUrlShedule(groupName);
             var lessons = new List<Lesson>();
-            int groupId = Convert.ToInt32(Regex.Match(url, @"groupoid=(\d+)").Groups[1].Value);
-            Model.Group group = new Model.Group() { GroupId = groupId, Name = groupName };
+            var matchGroupId = Regex.Match(url, @"groupoid=(\d+)");
+            if (!matchGroupId.Groups[1].Success)
+            {
+                throw new ArgumentException("Группы с таким названием не существует");
+            }
+            int groupId = Convert.ToInt32(matchGroupId.Groups[1].Value);
+            Model.Group group = new Model.Group() { Id = groupId, Name = groupName };
             GetStartDates(out var startDate, out var limitDate);
             var currentDate = startDate;
             while (currentDate < limitDate)
@@ -102,7 +108,7 @@ namespace UniShedule
             for (int i = 0; i < groupsName.Count; i++)
             {
                 int groupId = Convert.ToInt32(Regex.Match(urls[i], @"groupoid=(\d+)").Groups[1].Value);
-                Model.Group group = new Model.Group() { GroupId = groupId, Name = groupsName[i] };
+                Model.Group group = new Model.Group() { Id = groupId, Name = groupsName[i] };
                 GetStartDates(out var startDate, out var limitDate);
                 var currentDate = startDate;
                 while (currentDate < limitDate)

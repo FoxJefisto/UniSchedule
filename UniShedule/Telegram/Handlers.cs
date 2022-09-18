@@ -14,6 +14,8 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using UniShedule.Telegram;
 using UniShedule.Database;
 using System.IO.Pipes;
+using System.Text;
+using UniShedule.Model;
 
 namespace Telegram.Bot.Examples.Echo
 {
@@ -82,8 +84,8 @@ namespace Telegram.Bot.Examples.Echo
             }
             else
             {
-                var lastUserCommand = (UserCommands)Enum.Parse(typeof(UserCommands),
-               (await dbManager.GetUserInfoAsync(message.From.Id)).UserCommand);
+                var user = await dbManager.GetUserInfoAsync(message.From.Id);
+                var lastUserCommand = (UserCommands)Enum.Parse(typeof(UserCommands), user.UserCommand);
 
                 if (lastUserCommand == UserCommands.None)
                 {
@@ -93,8 +95,7 @@ namespace Telegram.Bot.Examples.Echo
                         "/closemenu" => CloseMainMenu(botClient, message),
                         "Показать расписание на сегодня" => GetTodaySchedule(botClient, message),
                         "Задать название группы" => SetGroupName(botClient, message),
-                        "Задать дату" => SetDate(botClient, message),
-                        "Показать расписание в определенный день" => GetSchedule(botClient, message),
+                        "Показать расписание в определенный день" => SetDate(botClient, message),
                         "Список загруженных групп" => GetGroups(botClient, message),
                         _ => Usage(botClient, message)
                     };
@@ -104,7 +105,7 @@ namespace Telegram.Bot.Examples.Echo
                     action = lastUserCommand switch
                     {
                         UserCommands.SetGroupName => SaveGroupName(botClient, message),
-                        UserCommands.SetDate => SaveDate(botClient, message),
+                        UserCommands.SetDate => GetSchedule(botClient, message),
                         _ => Usage(botClient, message)
                     };
                 }
@@ -115,15 +116,18 @@ namespace Telegram.Bot.Examples.Echo
         static async Task<Message> RegisterUser(ITelegramBotClient botClient, Message message)
         {
             await dbManager.SaveNewUserAsync(message);
+            await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                                    text: $"Привет! Я умею узнавать расписание занятий у всех групп НИУ МЭИ. Тебе всего лишь нужно указать номер группы в соответствующем меню, а всё остальное я сделаю сам) " +
+                                                    $"Пока мой знания довольно скудные. Я знаю лишь некоторые группы, о которых рассказали мне студенты. С ними ты сможешь ознакомиться в разделе 'Список загруженных групп'. " +
+                                                    $"Если твоей группы там нет - это здорово, значит у тебя появилась возможность внести свой вклад в моей развитие. " +
+                                                    $"Укажи её название в меню выбора группы и следуй дальнейшим инструкциям. После этого остается немного подождать, пока я буду обрабатывать новые данные."
+                                                    );
             return await Usage(botClient, message);
         }
         static async Task<Message> OpenMainMenu(ITelegramBotClient botClient, Message message)
         {
-            var user = await dbManager.GetUserInfoAsync(message.From.Id);
-            if (user == null)
-            {
-                user = await dbManager.GetUserInfoAsync(message.Chat.Id);
-            }
+            var id = message.From.IsBot ? message.Chat.Id : message.From.Id;
+            var user = await dbManager.GetUserInfoAsync(id);
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                                         text: $"Текущая группа: {user.GroupName}\nТекущая дата: {DateTime.Today:M}\nВыбранная дата: {user.CurrentDate:M}",
                                                         replyMarkup: impControls.rkmMainMenu);
@@ -143,7 +147,21 @@ namespace Telegram.Bot.Examples.Echo
             await dbManager.ChangeUserInfo(user);
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                                         text: "Введите название группы",
-                                                        replyMarkup: new ReplyKeyboardRemove());
+                                                        replyMarkup: impControls.ikmShowGroups);
+
+        }
+
+        static async Task<Message> ShowGroups(ITelegramBotClient botClient, Message message)
+        {
+            var sb = new StringBuilder("Группы(кликабельные):\n");
+            var groups = await dbManager.GetGroupsAsync();
+            foreach (var group in groups)
+            {
+                sb.Append($"<code>{group}</code>\n");
+            }
+            return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                                        text: sb.ToString(),
+                                                        parseMode: ParseMode.Html);
         }
 
         static async Task<Message> SetDate(ITelegramBotClient botClient, Message message)
@@ -152,8 +170,7 @@ namespace Telegram.Bot.Examples.Echo
             user.UserCommand = UserCommands.SetDate.ToString();
             await dbManager.ChangeUserInfo(user);
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                                        text: "Введите дату",
-                                                        replyMarkup: new ReplyKeyboardRemove());
+                                                        text: "Введите дату\nФормат даты: дд.мм.гггг");
         }
 
         static async Task<Message> SaveGroupName(ITelegramBotClient botClient, Message message)
@@ -176,23 +193,6 @@ namespace Telegram.Bot.Examples.Echo
                             replyMarkup: impControls.ikmYesNoLoad);
             }
 
-        }
-
-        static async Task<Message> SaveDate(ITelegramBotClient botClient, Message message)
-        {
-            var user = await dbManager.GetUserInfoAsync(message.From.Id);
-            user.UserCommand = UserCommands.None.ToString();
-            if (!DateTime.TryParse(message.Text, out var date))
-            {
-                return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                                        text: $"Дата введена в неверном формате!",
-                                                        replyMarkup: impControls.rkmMainMenu);
-            }
-            user.CurrentDate = date;
-            await dbManager.ChangeUserInfo(user);
-            return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                                        text: $"Дата сохранена\nТекущая дата: {user.CurrentDate:M}",
-                                                        replyMarkup: impControls.rkmMainMenu);
         }
 
         static async Task<Message> GetTodaySchedule(ITelegramBotClient botClient, Message message)
@@ -228,11 +228,24 @@ namespace Telegram.Bot.Examples.Echo
 
         static async Task<Message> GetSchedule(ITelegramBotClient botClient, Message message)
         {
-            var user = await dbManager.GetUserInfoAsync(message.From.Id);
-            if(user == null)
+            var id = message.From.IsBot ? message.Chat.Id : message.From.Id;
+            var user = await dbManager.GetUserInfoAsync(id);
+            var lastUserCommand = (UserCommands)Enum.Parse(typeof(UserCommands), user.UserCommand);
+
+            if (lastUserCommand == UserCommands.SetDate)
             {
-                user = await dbManager.GetUserInfoAsync(message.Chat.Id);
+                user.UserCommand = UserCommands.None.ToString();
+                await dbManager.ChangeUserInfo(user);
+                if (!DateTime.TryParse(message.Text, out var date))
+                {
+                    return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                                            text: $"Дата введена в неверном формате!",
+                                                            replyMarkup: impControls.rkmMainMenu);
+                }
+                user.CurrentDate = date;
+                await dbManager.ChangeUserInfo(user);
             }
+
             var lessons = await dbManager.GetCustomDateScheduleAsync(user.GroupName, user.CurrentDate);
             if (lessons.Count == 0)
             {
@@ -256,8 +269,11 @@ namespace Telegram.Bot.Examples.Echo
         {
             var groups = await dbManager.GetGroupsAsync();
             var result = "Группы:\n" + string.Join("\n", groups);
-            return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+            await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                             text: result,
+                                            replyMarkup: impControls.rkmMainMenu);
+            return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                            text: "Если твоей группы нет в списке, ты можешь помочь мне загрузить новые данные. Укажите ее название в меню выбора группы и следуй инструкциям.",
                                             replyMarkup: impControls.rkmMainMenu);
         }
 
@@ -269,7 +285,16 @@ namespace Telegram.Bot.Examples.Echo
             await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                                         text: $"Началась загрузка группы {loadingGroupName}. Я оповещу вас, когда она завершится",
                                                         replyMarkup: impControls.rkmMainMenu);
-            await Task.Run(() => fetcher.SaveLessons(loadingGroupName));
+            try
+            {
+                await Task.Run(() => fetcher.SaveLessons(loadingGroupName));
+            }
+            catch (ArgumentException ex)
+            {
+                return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                            text: $"{ex.Message}",
+                                            replyMarkup: impControls.rkmMainMenu);
+            }
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                             text: $"Загрузка группы {loadingGroupName} завершена!",
                                             replyMarkup: impControls.rkmMainMenu);
@@ -278,8 +303,7 @@ namespace Telegram.Bot.Examples.Echo
         static async Task<Message> Usage(ITelegramBotClient botClient, Message message)
         {
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                                        text: impControls.usage,
-                                                        replyMarkup: new ReplyKeyboardRemove());
+                                                        text: impControls.usage);
         }
 
         // Process Inline Keyboard callback data
@@ -308,6 +332,9 @@ namespace Telegram.Bot.Examples.Echo
                     break;
                 case "NoLoad":
                     action = OpenMainMenu(botClient, callbackQuery.Message);
+                    break;
+                case "ShowGroups":
+                    action = ShowGroups(botClient, callbackQuery.Message);
                     break;
                 default:
                     action = Usage(botClient, callbackQuery.Message);

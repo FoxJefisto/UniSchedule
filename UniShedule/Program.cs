@@ -24,8 +24,7 @@ namespace UniShedule
             //var list = db.GetScheduleAsync("А-05-19").GetAwaiter().GetResult();
             TelegramApi tg = TelegramApi.GetInstance();
             tg.Start();
-            Console.ReadKey();
-            tg.Stop();
+            Thread.Sleep(50000000);
         }
     }
 }

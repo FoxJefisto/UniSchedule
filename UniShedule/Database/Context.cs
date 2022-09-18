@@ -8,9 +8,14 @@ namespace UniShedule.Database
 {
     class Context : DbContext
     {
+        public Context () {
+            Database.EnsureCreated();
+        }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer("Server=.\\SQLEXPRESS; DATABASE=UniSheduleDB; Trusted_Connection=True");
+            var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
+            optionsBuilder.UseSqlServer(connectionString);
         }
 
         public DbSet<Lesson> Lessons { get; set; }

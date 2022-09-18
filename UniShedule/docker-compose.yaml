@@ -1,0 +1,37 @@
+# Use postgres/example user/password credentials
+version: '3.1'
+
+services:
+  database:
+    image: mcr.microsoft.com/mssql/server
+    container_name: unischedule-db
+    restart: always
+    environment:
+      ACCEPT_EULA: Y
+      SA_PASSWORD: Qwerty123#123!
+    ports:
+    - "1433:1433"
+    healthcheck:
+      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$$SA_PASSWORD" -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  chrome:
+    image: browserless/chrome
+    ports:
+    - "3000:3000"
+
+  bot:
+    image: unischedule:latest    
+    container_name: unischedule
+    build:
+      context: .
+    environment:
+      CONNECTION_STRING: "Server=database; Database=UniSheduleDB; User ID=sa; Password=Qwerty123#123!; Trusted_Connection=False; MultipleActiveResultSets=True"
+      EDGE_HOST: chrome
+      EDGE_PORT: 3000
+    depends_on:
+      database:
+        condition: service_healthy

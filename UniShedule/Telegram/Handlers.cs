@@ -216,7 +216,7 @@ namespace Telegram.Bot.Examples.Echo
 
             }
             var bmp = impFuncs.DrawOneDaySchedule(lessons);
-            const string path = @"C:/Windows/Temp/table.jpg";
+            const string path = @"./table.jpg";
             bmp.Save(path, System.Drawing.Imaging.ImageFormat.Jpeg);
             using (var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
             {

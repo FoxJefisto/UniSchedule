@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using OpenQA.Selenium.IE;
 using OpenQA.Selenium.Support.UI;
+using OpenQA.Selenium.Chrome;
 
 namespace UniShedule
 {
@@ -35,7 +36,7 @@ namespace UniShedule
 
         private List<string> GetUrlShedule(List<string> groupsName)
         {
-            driver = new EdgeDriver();
+            driver = new ChromeDriver();
             driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(5);
             var urls = new List<string>();
             foreach (var groupName in groupsName)

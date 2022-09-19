@@ -41,7 +41,6 @@ namespace UniShedule.Telegram
                                cts.Token);
 
             Console.WriteLine($"Start listening for @{me.Username}");
-            Console.ReadLine();
         }
 
         public void Stop()

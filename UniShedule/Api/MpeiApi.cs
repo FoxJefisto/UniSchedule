@@ -9,6 +9,7 @@ using System.Threading;
 using OpenQA.Selenium.IE;
 using OpenQA.Selenium.Support.UI;
 using OpenQA.Selenium.Chrome;
+using OpenQA.Selenium.Remote;
 
 namespace UniShedule
 {
@@ -16,7 +17,8 @@ namespace UniShedule
     {
         private string mainUrl;
         private string nodeBtnPath;
-        private IWebDriver driver;
+        private RemoteWebDriver driver;
+        private ChromeOptions options;
         private static MpeiApi instance;
         private static RestClient restClient;
 
@@ -32,45 +34,28 @@ namespace UniShedule
             mainUrl = @"https://mpei.ru/Education/timetable/Pages/default.aspx";
             nodeBtnPath = @"//div[@class='mpei-galaktika-group-form-control']";
             restClient = new RestClient();
-        }
-
-        private List<string> GetUrlShedule(List<string> groupsName)
-        {
-            var service = ChromeDriverService.CreateDefaultService();
-            service.HostName = Environment.GetEnvironmentVariable("EDGE_HOST");
-            service.Port = int.Parse(Environment.GetEnvironmentVariable("EDGE_PORT"));
-            driver = new ChromeDriver(service);
+            options = new ChromeOptions();
+            options.AddArgument("no-sandbox");
+            options.AddArgument("window-size=1920x1080");
+            options.AddArgument("headless");
+            Console.WriteLine("Драйвер получил данные о сервисе");
+            driver = new RemoteWebDriver(new Uri("http://chrome:4444/wd/hub/"), options);
+            driver.Manage().Window.Size = new System.Drawing.Size(1920, 1080);
             driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(5);
-            var urls = new List<string>();
-            foreach (var groupName in groupsName)
-            {
-                driver.Navigate().GoToUrl(mainUrl);
-                Thread.Sleep(2000);
-                IWebElement element = driver.FindElement(By.XPath($"{nodeBtnPath}/input[@placeholder='Введите название группы']"));
-                element.SendKeys(groupName);
-                element = driver.FindElement(By.XPath($"{nodeBtnPath}/input[@type='submit']"));
-                element.Click();
-                urls.Add(driver.Url);
-            }
-            driver.Close();
-            return urls;
         }
-
-
 
         private string GetUrlShedule(string groupName)
         {
-            driver = new EdgeDriver();
-            driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(5);
             string url;
             try
             {
+                Console.WriteLine("Попытка браузера зайти на сайт");
                 driver.Navigate().GoToUrl(mainUrl);
+                Console.WriteLine("Браузер зашел на сайт");
             }
-            catch(WebDriverTimeoutException ex)
+            catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
-                driver.Close();
+                Console.WriteLine($"Ошибка: {ex.Message}");
                 return GetUrlShedule(groupName);
             }
             IWebElement element = driver.FindElement(By.XPath($"{nodeBtnPath}/input[@placeholder='Введите название группы']"));
@@ -78,7 +63,6 @@ namespace UniShedule
             element = driver.FindElement(By.XPath($"{nodeBtnPath}/input[@type='submit']"));
             element.Click();
             url = driver.Url;
-            driver.Close();
             return url;
         }
 
@@ -101,27 +85,6 @@ namespace UniShedule
                 currentDate = currentDate.AddDays(7);
                 Console.WriteLine($"Занятий схвачено: {lessons.Count}");
                 Thread.Sleep(1000);
-            }
-            return lessons;
-        }
-
-        public List<Lesson> GetAllLessons(List<string> groupsName)
-        {
-            var urls = GetUrlShedule(groupsName);
-            var lessons = new List<Lesson>();
-            for (int i = 0; i < groupsName.Count; i++)
-            {
-                int groupId = Convert.ToInt32(Regex.Match(urls[i], @"groupoid=(\d+)").Groups[1].Value);
-                Model.Group group = new Model.Group() { Id = groupId, Name = groupsName[i] };
-                GetStartDates(out var startDate, out var limitDate);
-                var currentDate = startDate;
-                while (currentDate < limitDate)
-                {
-                    lessons.AddRange(GetWeekLessons(urls[i], group, currentDate));
-                    currentDate = currentDate.AddDays(7);
-                    Console.WriteLine($"Занятий схвачено: {lessons.Count}");
-                    Thread.Sleep(1000);
-                }
             }
             return lessons;
         }

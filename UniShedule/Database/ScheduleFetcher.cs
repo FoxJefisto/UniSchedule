@@ -15,16 +15,6 @@ namespace UniShedule.Database
             return instance;
         }
 
-        public void SaveLessons(List<string> groupsName)
-        {
-            var lessons = api.GetAllLessons(groupsName);
-            using (Context db = new Context())
-            {
-                db.Lessons.AddRange(lessons);
-                db.SaveChanges();
-            }
-        }
-
         public void SaveLessons(string groupName)
         {
             var lessons = api.GetAllLessons(groupName);

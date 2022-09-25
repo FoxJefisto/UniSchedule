@@ -19,9 +19,11 @@ services:
       start_period: 10s
 
   chrome:
-    image: browserless/chrome
+    image: selenium/standalone-chrome
+    restart: always
     ports:
-    - "3000:3000"
+      - 4444:4444
+
 
   bot:
     image: unischedule:latest    
@@ -30,8 +32,8 @@ services:
       context: .
     environment:
       CONNECTION_STRING: "Server=database; Database=UniSheduleDB; User ID=sa; Password=Qwerty123#123!; Trusted_Connection=False; MultipleActiveResultSets=True"
-      EDGE_HOST: chrome
-      EDGE_PORT: 3000
+    links:
+      - chrome
     depends_on:
       database:
         condition: service_healthy

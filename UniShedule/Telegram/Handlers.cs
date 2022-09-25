@@ -29,8 +29,9 @@ namespace Telegram.Bot.Examples.Echo
         };
 
         private static TelegramControlsImp impControls = new TelegramControlsImp();
-        private static TelegramImpFuncs impFuncs = new TelegramImpFuncs();
+        private static SKImageCreator imageCreator = new SKImageCreator();
         private static DataBaseManager dbManager = DataBaseManager.GetInstance();
+        private static string path = "table.png";
         public static Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
         {
             var ErrorMessage = exception switch
@@ -215,15 +216,18 @@ namespace Telegram.Bot.Examples.Echo
                                         replyMarkup: impControls.ikmDaySwitcher);
 
             }
-            var bmp = impFuncs.DrawOneDaySchedule(lessons);
-            const string path = @"./table.jpg";
-            bmp.Save(path, System.Drawing.Imaging.ImageFormat.Jpeg);
-            using (var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                return await botClient.SendPhotoAsync(chatId: message.Chat.Id,
-                                        photo: new InputOnlineFile(fileStream),
+            var result = imageCreator.PrintOneDaySchedule(lessons);
+            return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                        text: result,
                                         replyMarkup: impControls.ikmDaySwitcher);
-            }
+            //var skData = imageCreator.DrawOneDaySchedule(lessons);
+            //imageCreator.SaveImage(skData, path);
+            //using (var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+            //{
+            //    return await botClient.SendPhotoAsync(chatId: message.Chat.Id,
+            //                            photo: new InputOnlineFile(fileStream),
+            //                            replyMarkup: impControls.ikmDaySwitcher);
+            //}
         }
 
         static async Task<Message> GetSchedule(ITelegramBotClient botClient, Message message)
@@ -254,15 +258,18 @@ namespace Telegram.Bot.Examples.Echo
                                         replyMarkup: impControls.ikmDaySwitcher);
 
             }
-            var bmp = impFuncs.DrawOneDaySchedule(lessons);
-            const string path = @"C:/Windows/Temp/table.jpg";
-            bmp.Save(path, System.Drawing.Imaging.ImageFormat.Jpeg);
-            using (var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                return await botClient.SendPhotoAsync(chatId: message.Chat.Id,
-                                        photo: new InputOnlineFile(fileStream),
+            var result = imageCreator.PrintOneDaySchedule(lessons);
+            return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                        text: result,
                                         replyMarkup: impControls.ikmDaySwitcher);
-            }
+            //var skData = imageCreator.DrawOneDaySchedule(lessons);
+            //imageCreator.SaveImage(skData, path);
+            //using (var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+            //{
+            //    return await botClient.SendPhotoAsync(chatId: message.Chat.Id,
+            //                            photo: new InputOnlineFile(fileStream),
+            //                            replyMarkup: impControls.ikmDaySwitcher);
+            //}
         }
 
         static async Task<Message> GetGroups(ITelegramBotClient botClient, Message message)

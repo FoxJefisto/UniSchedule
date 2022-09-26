@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace UniShedule.Telegram
+﻿namespace UniShedule.Telegram
 {
     class Configuration
     {

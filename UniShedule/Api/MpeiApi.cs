@@ -36,8 +36,8 @@ namespace UniShedule
             restClient = new RestClient();
             options = new ChromeOptions();
             options.AddArgument("no-sandbox");
+            options.AddArgument("disable-dev-shm-usage");
             options.AddArgument("window-size=1920x1080");
-            options.AddArgument("headless");
             Console.WriteLine("Драйвер получил данные о сервисе");
             driver = new RemoteWebDriver(new Uri("http://chrome:4444/wd/hub/"), options);
             driver.Manage().Window.Size = new System.Drawing.Size(1920, 1080);
@@ -46,24 +46,25 @@ namespace UniShedule
 
         private string GetUrlShedule(string groupName)
         {
-            string url;
+            
             try
             {
                 Console.WriteLine("Попытка браузера зайти на сайт");
                 driver.Navigate().GoToUrl(mainUrl);
                 Console.WriteLine("Браузер зашел на сайт");
+                IWebElement element = driver.FindElement(By.XPath($"{nodeBtnPath}/input[@placeholder='Введите название группы']"));
+                element.SendKeys(groupName);
+                element = driver.FindElement(By.XPath($"{nodeBtnPath}/input[@type='submit']"));
+                element.Click();
+                return driver.Url;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Ошибка: {ex.Message}");
+                Thread.Sleep(1000);
                 return GetUrlShedule(groupName);
             }
-            IWebElement element = driver.FindElement(By.XPath($"{nodeBtnPath}/input[@placeholder='Введите название группы']"));
-            element.SendKeys(groupName);
-            element = driver.FindElement(By.XPath($"{nodeBtnPath}/input[@type='submit']"));
-            element.Click();
-            url = driver.Url;
-            return url;
+
         }
 
         public List<Lesson> GetAllLessons(string groupName)

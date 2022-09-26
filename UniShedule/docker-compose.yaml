@@ -5,10 +5,11 @@ services:
   database:
     image: mcr.microsoft.com/mssql/server
     container_name: unischedule-db
-    restart: always
     environment:
-      ACCEPT_EULA: Y
-      SA_PASSWORD: Qwerty123#123!
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "Qwerty123#123!"
+    volumes:
+      - './drive:/var/opt/mssql/data'
     ports:
     - "1433:1433"
     healthcheck:
@@ -20,7 +21,6 @@ services:
 
   chrome:
     image: selenium/standalone-chrome
-    restart: always
     ports:
       - 4444:4444
 
@@ -31,9 +31,7 @@ services:
     build:
       context: .
     environment:
-      CONNECTION_STRING: "Server=database; Database=UniSheduleDB; User ID=sa; Password=Qwerty123#123!; Trusted_Connection=False; MultipleActiveResultSets=True"
-    links:
-      - chrome
+      CONNECTION_STRING: "Server=database,1433; Database=UniScheduleDB; User ID=sa; Password=Qwerty123#123!; MultipleActiveResultSets=True"
     depends_on:
       database:
         condition: service_healthy

@@ -8,6 +8,8 @@ services:
     environment:
       ACCEPT_EULA: "Y"
       SA_PASSWORD: "Qwerty123#123!"
+      TZ: "Europe/Moscow"
+      DEBIAN_FRONTEND: "noninteractive"
     volumes:
       - './drive:/var/opt/mssql/data'
     ports:

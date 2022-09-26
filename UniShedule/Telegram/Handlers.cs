@@ -74,7 +74,7 @@ namespace Telegram.Bot.Examples.Echo
 
         private static async Task BotOnMessageReceived(ITelegramBotClient botClient, Message message)
         {
-            Console.WriteLine($"Тип получаемого сообщения: {message.Type}\nСодержание получаемого сообщения: {message.Text}");
+            Console.WriteLine($"Пользователь: {message.From.Id}-{message.From.Username}\nСодержание получаемого сообщения: {message.Text}");
             if (message.Type != MessageType.Text)
                 return;
             Task<Message> action;
@@ -116,7 +116,9 @@ namespace Telegram.Bot.Examples.Echo
         }
         static async Task<Message> RegisterUser(ITelegramBotClient botClient, Message message)
         {
+            Console.WriteLine($"Вход нового пользователя {message.From.Id}-{message.From.Username}. Регистрация...");
             await dbManager.SaveNewUserAsync(message);
+            Console.WriteLine($"Пользователь {message.From.Id}-{message.From.Username} успешно зарегистрирован");
             await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                                     text: $"Привет! Я умею узнавать расписание занятий у всех групп НИУ МЭИ. Тебе всего лишь нужно указать номер группы в соответствующем меню, а всё остальное я сделаю сам) " +
                                                     $"Пока мой знания довольно скудные. Я знаю лишь некоторые группы, о которых рассказали мне студенты. С ними ты сможешь ознакомиться в разделе 'Список загруженных групп'. " +
@@ -288,6 +290,7 @@ namespace Telegram.Bot.Examples.Echo
         {
             var user = await dbManager.GetUserInfoAsync(message.Chat.Id);
             var loadingGroupName = user.GroupName;
+            Console.WriteLine($"Началась загрузка группы {loadingGroupName}");
             await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                             text: $"Началась загрузка группы {loadingGroupName}. Я оповещу вас, когда она завершится",
                                             replyMarkup: impControls.rkmMainMenu);
@@ -335,6 +338,7 @@ namespace Telegram.Bot.Examples.Echo
                     action = GetSchedule(botClient, callbackQuery.Message);
                     break;
                 case "YesLoad":
+                    Console.WriteLine($"Пользователь {callbackQuery.Message.Chat.Id}-{callbackQuery.Message.Chat.Username} начал загрузку новой группы");
                     await botClient.DeleteMessageAsync(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId);
                     action = FetchNewGroup(botClient, callbackQuery.Message);
                     break;

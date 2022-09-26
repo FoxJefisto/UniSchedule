@@ -46,7 +46,7 @@ namespace UniShedule
 
         private string GetUrlShedule(string groupName)
         {
-            
+
             try
             {
                 Console.WriteLine("Попытка браузера зайти на сайт");
@@ -56,6 +56,7 @@ namespace UniShedule
                 element.SendKeys(groupName);
                 element = driver.FindElement(By.XPath($"{nodeBtnPath}/input[@type='submit']"));
                 element.Click();
+                Console.WriteLine("Браузер успешно получил ссылку группы");
                 return driver.Url;
             }
             catch (Exception ex)
@@ -74,6 +75,7 @@ namespace UniShedule
             var matchGroupId = Regex.Match(url, @"groupoid=(\d+)");
             if (!matchGroupId.Groups[1].Success)
             {
+                Console.WriteLine("Группы с таким названием не существует");
                 throw new ArgumentException("Группы с таким названием не существует");
             }
             int groupId = Convert.ToInt32(matchGroupId.Groups[1].Value);
@@ -87,6 +89,7 @@ namespace UniShedule
                 Console.WriteLine($"Занятий схвачено: {lessons.Count}");
                 Thread.Sleep(1000);
             }
+            Console.WriteLine("Данные о группе успешно считаны");
             return lessons;
         }
 
@@ -113,66 +116,75 @@ namespace UniShedule
 
         private List<Lesson> GetWeekLessons(string url, Model.Group group, DateTime currentDate)
         {
-            var html = GetHTMLString(url + $"&start={currentDate.ToString("yyyy.MM.dd")}");
-            var doc = new HtmlDocument();
-            doc.LoadHtml(html);
-            var table = doc.DocumentNode.SelectNodes(".//table[@class='mpei-galaktika-lessons-grid-tbl']//tr");
-            var lessons = new List<Lesson>();
-            var lesson = new Lesson();
-            var dateInfo = new DateInfo();
-            string lessonTime = null;
-            foreach (var row in table)
+            string html;
+            try
             {
-                var rowDate = row.SelectSingleNode("./td[@class='mpei-galaktika-lessons-grid-date']");
-                if (rowDate != null)
+                html = GetHTMLString(url + $"&start={currentDate.ToString("yyyy.MM.dd")}");
+                var doc = new HtmlDocument();
+                doc.LoadHtml(html);
+                var table = doc.DocumentNode.SelectNodes(".//table[@class='mpei-galaktika-lessons-grid-tbl']//tr");
+                var lessons = new List<Lesson>();
+                var lesson = new Lesson();
+                var dateInfo = new DateInfo();
+                string lessonTime = null;
+                foreach (var row in table)
                 {
-                    dateInfo = ParseDate(rowDate.InnerText, currentDate);
-                    currentDate = dateInfo.Date.Date;
-                    continue;
-                }
+                    var rowDate = row.SelectSingleNode("./td[@class='mpei-galaktika-lessons-grid-date']");
+                    if (rowDate != null)
+                    {
+                        dateInfo = ParseDate(rowDate.InnerText, currentDate);
+                        currentDate = dateInfo.Date.Date;
+                        continue;
+                    }
 
 
-                var rowTime = row.SelectSingleNode("./td[@class='mpei-galaktika-lessons-grid-time']");
-                if (rowTime != null)
-                {
-                    lessonTime = rowTime.InnerText;
+                    var rowTime = row.SelectSingleNode("./td[@class='mpei-galaktika-lessons-grid-time']");
+                    if (rowTime != null)
+                    {
+                        lessonTime = rowTime.InnerText;
+                    }
+                    var rowLesson = row.SelectSingleNode("./td[@class='mpei-galaktika-lessons-grid-day']");
+                    if (rowLesson != null)
+                    {
+                        lesson = new Lesson();
+                        lesson.Time = lessonTime;
+                        lesson.Group = group;
+                        lesson.Date = dateInfo;
+                        var rowLessonName = row.SelectSingleNode(".//span[@class='mpei-galaktika-lessons-grid-name']");
+                        if (rowLessonName != null)
+                        {
+                            lesson.Name = rowLessonName.InnerText;
+                        }
+                        var rowLessonType = row.SelectSingleNode(".//span[@class='mpei-galaktika-lessons-grid-type']");
+                        if (rowLessonType != null)
+                        {
+                            lesson.Type = rowLessonType.InnerText;
+                        }
+                        var rowLessonPlace = row.SelectSingleNode(".//span[@class='mpei-galaktika-lessons-grid-room']");
+                        if (rowLessonPlace != null)
+                        {
+                            lesson.Place = rowLessonPlace.InnerText;
+                        }
+                        var rowLessonMembers = row.SelectSingleNode(".//span[@class='mpei-galaktika-lessons-grid-grp']");
+                        if (rowLessonMembers != null)
+                        {
+                            lesson.Members = rowLessonMembers.InnerText;
+                        }
+                        var rowLessonTeacher = row.SelectSingleNode(".//span[@class='mpei-galaktika-lessons-grid-pers']");
+                        if (rowLessonTeacher != null)
+                        {
+                            lesson.Teacher = rowLessonTeacher.InnerText;
+                        }
+                        lessons.Add(lesson);
+                    }
                 }
-                var rowLesson = row.SelectSingleNode("./td[@class='mpei-galaktika-lessons-grid-day']");
-                if (rowLesson != null)
-                {
-                    lesson = new Lesson();
-                    lesson.Time = lessonTime;
-                    lesson.Group = group;
-                    lesson.Date = dateInfo;
-                    var rowLessonName = row.SelectSingleNode(".//span[@class='mpei-galaktika-lessons-grid-name']");
-                    if (rowLessonName != null)
-                    {
-                        lesson.Name = rowLessonName.InnerText;
-                    }
-                    var rowLessonType = row.SelectSingleNode(".//span[@class='mpei-galaktika-lessons-grid-type']");
-                    if (rowLessonType != null)
-                    {
-                        lesson.Type = rowLessonType.InnerText;
-                    }
-                    var rowLessonPlace = row.SelectSingleNode(".//span[@class='mpei-galaktika-lessons-grid-room']");
-                    if (rowLessonPlace != null)
-                    {
-                        lesson.Place = rowLessonPlace.InnerText;
-                    }
-                    var rowLessonMembers = row.SelectSingleNode(".//span[@class='mpei-galaktika-lessons-grid-grp']");
-                    if (rowLessonMembers != null)
-                    {
-                        lesson.Members = rowLessonMembers.InnerText;
-                    }
-                    var rowLessonTeacher = row.SelectSingleNode(".//span[@class='mpei-galaktika-lessons-grid-pers']");
-                    if (rowLessonTeacher != null)
-                    {
-                        lesson.Teacher = rowLessonTeacher.InnerText;
-                    }
-                    lessons.Add(lesson);
-                }
+                return lessons;
             }
-            return lessons;
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка: {ex.Message}");
+                return GetWeekLessons(url, group, currentDate);
+            }
         }
 
         private DateInfo ParseDate(string rowInfo, DateTime currentDate)

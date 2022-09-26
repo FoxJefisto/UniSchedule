@@ -23,9 +23,10 @@ namespace UniShedule
             //var db = Database.Database.GetInstance();
             //var list = db.GetScheduleAsync("А-05-19").GetAwaiter().GetResult();
             TelegramApi tg = TelegramApi.GetInstance();
+            tg.Start();
             while (true)
             {
-                tg.Start();
+                Thread.Sleep(50000000);
             }
         }
     }

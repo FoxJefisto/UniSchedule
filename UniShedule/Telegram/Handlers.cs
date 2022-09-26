@@ -78,16 +78,14 @@ namespace Telegram.Bot.Examples.Echo
             if (message.Type != MessageType.Text)
                 return;
             Task<Message> action;
-
-            if (message.Text == "/start")
+            var user = await dbManager.GetUserInfoAsync(message.From.Id);
+            if (message.Text == "/start" || user == null)
             {
                 action = RegisterUser(botClient, message);
             }
             else
             {
-                var user = await dbManager.GetUserInfoAsync(message.From.Id);
                 var lastUserCommand = (UserCommands)Enum.Parse(typeof(UserCommands), user.UserCommand);
-
                 if (lastUserCommand == UserCommands.None)
                 {
                     action = (message.Text) switch
@@ -98,6 +96,7 @@ namespace Telegram.Bot.Examples.Echo
                         "Задать название группы" => SetGroupName(botClient, message),
                         "Показать расписание в определенный день" => SetDate(botClient, message),
                         "Список загруженных групп" => GetGroups(botClient, message),
+                        "Скрыть меню" => CloseMainMenu(botClient, message),
                         _ => Usage(botClient, message)
                     };
                 }
@@ -139,7 +138,7 @@ namespace Telegram.Bot.Examples.Echo
         static async Task<Message> CloseMainMenu(ITelegramBotClient botClient, Message message)
         {
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                                        text: "Удаление клавиатуры",
+                                                        text: "Открыть меню: /openmenu",
                                                         replyMarkup: new ReplyKeyboardRemove());
         }
 

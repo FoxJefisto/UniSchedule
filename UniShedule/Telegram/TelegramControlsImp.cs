@@ -13,7 +13,7 @@ namespace UniShedule.Telegram
                         new KeyboardButton[] { "Показать расписание на сегодня" },
                         new KeyboardButton[] { "Задать название группы"},
                         new KeyboardButton[] { "Показать расписание в определенный день" },
-                        new KeyboardButton[] { "Список загруженных групп" }
+                        new KeyboardButton[] { "Список загруженных групп", "Скрыть меню" },
                     }
                     )
         {

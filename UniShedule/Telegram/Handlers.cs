@@ -76,7 +76,7 @@ namespace Telegram.Bot.Examples.Echo
 
         private static async Task BotOnMessageReceived(ITelegramBotClient botClient, Message message)
         {
-            Console.WriteLine($"[{message.Date:G}]Пользователь: [{message.From.Id}]{message.From.Username}\nCообщение:[{message.MessageId}]{message.Text}");
+            Console.WriteLine($"[{DateTime.Now:G}]Пользователь: [{message.From.Id}]{message.From.Username}\nCообщение:[{message.MessageId}]{message.Text}");
             if (message.Type != MessageType.Text)
                 return;
             Task<Message> action;
@@ -131,7 +131,7 @@ namespace Telegram.Bot.Examples.Echo
         {
             Console.WriteLine($"Вход нового пользователя {message.From.Id}-{message.From.Username}. Регистрация...");
             await dbManager.SaveNewUserAsync(message);
-            Console.WriteLine($"[{message.Date:G}]Пользователь {message.From.Id}-{message.From.Username} успешно зарегистрирован");
+            Console.WriteLine($"[{DateTime.Now:G}]Пользователь {message.From.Id}-{message.From.Username} успешно зарегистрирован");
             await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                                     text: impControls.welcome
                                                     );
@@ -399,7 +399,7 @@ namespace Telegram.Bot.Examples.Echo
                                             text: $"{ex.Message}",
                                             replyMarkup: impControls.rkmMainMenu);
             }
-            Console.WriteLine($"[{message.Date:G}] Загрзука группы {loadingGroupName} завершена");
+            Console.WriteLine($"[{DateTime.Now:G}] Загрзука группы {loadingGroupName} завершена");
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                             text: $"Загрузка группы {loadingGroupName} завершена!",
                                             replyMarkup: impControls.rkmMainMenu);
@@ -433,7 +433,7 @@ namespace Telegram.Bot.Examples.Echo
                     action = GetSchedule(botClient, callbackQuery.Message);
                     break;
                 case "YesLoad":
-                    Console.WriteLine($"[{callbackQuery.Message.Date:G}]Пользователь [{callbackQuery.Message.Chat.Id}]{callbackQuery.Message.Chat.Username} начал загрузку новой группы");
+                    Console.WriteLine($"[{DateTime.Now:G}]Пользователь [{callbackQuery.Message.Chat.Id}]{callbackQuery.Message.Chat.Username} начал загрузку новой группы");
                     await botClient.DeleteMessageAsync(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId);
                     action = FetchNewGroup(botClient, callbackQuery.Message);
                     break;

@@ -13,6 +13,8 @@ RUN dotnet publish -c Release -o out
 
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/runtime:3.1
+ENV TZ="Europe/Moscow"
+ENV DEBIAN_FRONTEND="noninteractive"
 WORKDIR /app
 COPY --from=build-env /app/out .
 ENTRYPOINT ["dotnet", "UniShedule.dll"]

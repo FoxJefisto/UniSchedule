@@ -288,10 +288,10 @@ namespace Telegram.Bot.Examples.Echo
         {
             var user = await dbManager.GetUserInfoAsync(message.Chat.Id);
             var loadingGroupName = user.GroupName;
-            var fetcher = ScheduleFetcher.GetInstance();
             await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                                        text: $"Началась загрузка группы {loadingGroupName}. Я оповещу вас, когда она завершится",
-                                                        replyMarkup: impControls.rkmMainMenu);
+                                            text: $"Началась загрузка группы {loadingGroupName}. Я оповещу вас, когда она завершится",
+                                            replyMarkup: impControls.rkmMainMenu);
+            var fetcher = ScheduleFetcher.GetInstance();
             try
             {
                 await Task.Run(() => fetcher.SaveLessons(loadingGroupName));
@@ -335,9 +335,11 @@ namespace Telegram.Bot.Examples.Echo
                     action = GetSchedule(botClient, callbackQuery.Message);
                     break;
                 case "YesLoad":
+                    await botClient.DeleteMessageAsync(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId);
                     action = FetchNewGroup(botClient, callbackQuery.Message);
                     break;
                 case "NoLoad":
+                    await botClient.DeleteMessageAsync(callbackQuery.Message.Chat.Id, callbackQuery.Message.MessageId);
                     action = OpenMainMenu(botClient, callbackQuery.Message);
                     break;
                 case "ShowGroups":

@@ -69,7 +69,16 @@ namespace UniShedule.Database
                 bool isExist = await db.Users.AnyAsync(x => x.Id == message.From.Id);
                 if (!isExist)
                 {
-                    Model.User user = new Model.User() { Id = message.From.Id, FirstName = message.From.FirstName, LastName = message.From.LastName, CurrentDate = message.Date.Date, GroupName = "", UserCommand = "None" };
+                    Model.User user = new Model.User()
+                    {
+                        Id = message.From.Id,
+                        FirstName = message.From.FirstName,
+                        LastName = message.From.LastName,
+                        CurrentDate = message.Date.Date,
+                        GroupName = "",
+                        UserCommand = "None",
+                        ReminderState = false
+                    };
                     db.Users.Add(user);
                     await db.SaveChangesAsync();
                 }
@@ -85,19 +94,82 @@ namespace UniShedule.Database
             }
         }
 
-        public async Task ChangeUserInfo(Model.User user)
+        public async Task ChangeUserInfoAsync(Model.User user)
         {
             using (Context db = new Context())
             {
-                var result = await db.Users.FindAsync(user.Id);
-                if(result != null)
+                db.Attach(user);
+                db.Entry(user).State = EntityState.Modified;
+                await db.SaveChangesAsync();
+            }
+        }
+
+        public async Task SaveReminderAsync(DateTime remindTime)
+        {
+            using (Context db = new Context())
+            {
+                bool isExist = await db.Reminders.AnyAsync(x => x.RemindTime.Hour == remindTime.Hour && x.RemindTime.Minute == remindTime.Minute);
+                if (!isExist)
                 {
-                    result.UserCommand = user.UserCommand;
-                    result.GroupName = user.GroupName;
-                    result.CurrentDate = user.CurrentDate;
-                    db.Entry(result).State = EntityState.Modified;
-                    await db.SaveChangesAsync();
+                    db.Reminders.Add(new Reminder { RemindTime = remindTime });
                 }
+                await db.SaveChangesAsync();
+            }
+        }
+
+        public async Task DeleteReminderAsync(DateTime remindTime)
+        {
+            using (Context db = new Context())
+            {
+                var reminder = await db.Reminders.FirstOrDefaultAsync(x => x.RemindTime.Hour == remindTime.Hour && x.RemindTime.Minute == remindTime.Minute);
+                if (reminder != null && reminder.Users.Count == 0)
+                {
+                    db.Reminders.Remove(reminder);
+                }
+                await db.SaveChangesAsync();
+            }
+        }
+
+        public async Task SaveUserReminderAsync(Model.User user, DateTime remindTime)
+        {
+            using (Context db = new Context())
+            {
+                db.Users.Attach(user);
+                var reminder = await db.Reminders.FirstAsync(x => x.RemindTime.Hour == remindTime.Hour && x.RemindTime.Minute == remindTime.Minute);
+                user.Reminders.Add(reminder);
+                reminder.Users.Add(user);
+                await db.SaveChangesAsync();
+            }
+        }
+
+        public async Task<string> DeleteUserReminderAsync(Model.User user, DateTime remindTime)
+        {
+            using (Context db = new Context())
+            {
+                db.Users.Attach(user);
+                var reminder = await db.Reminders.FirstOrDefaultAsync(x => x.RemindTime.Hour == remindTime.Hour && x.RemindTime.Minute == remindTime.Minute);
+                if(reminder == null)
+                {
+                    return "Сценарий на данное время не обнаружен";
+                }
+                user.Reminders.Remove(reminder);
+                reminder.Users.Remove(user);
+                await db.SaveChangesAsync();
+                return "Сценарий на данное время удален";
+            }
+        }
+
+        public async Task<string> GetReminders(long Id)
+        {
+            using (Context db = new Context())
+            {
+                var user = await db.Users.Include(d => d.Reminders).FirstAsync(x => x.Id == Id);
+                var sb = new StringBuilder();
+                foreach (var reminder in user.Reminders)
+                {
+                    sb.Append($"{reminder.RemindTime:t}\n");
+                }
+                return sb.ToString();
             }
         }
 

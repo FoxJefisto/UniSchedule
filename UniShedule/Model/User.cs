@@ -16,5 +16,7 @@ namespace UniShedule.Model
         [Column(TypeName = "date")]
         public DateTime CurrentDate { get; set; }
         public string UserCommand { get; set; }
+        public bool ReminderState { get; set; }
+        public ICollection<Reminder> Reminders { get; set; } = new List<Reminder>();
     }
 }

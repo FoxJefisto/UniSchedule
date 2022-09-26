@@ -12,10 +12,23 @@ namespace UniShedule.Telegram
                     {
                         new KeyboardButton[] { "Показать расписание на сегодня" },
                         new KeyboardButton[] { "Задать название группы"},
-                        new KeyboardButton[] { "Показать расписание в определенный день" },
+                        new KeyboardButton[] { "Показать расписание в определенный день", "Создать авторассылку" },
                         new KeyboardButton[] { "Список загруженных групп", "Скрыть меню" },
                     }
                     )
+        {
+            ResizeKeyboard = true
+        };
+
+        public ReplyKeyboardMarkup rkmReminderMenu = new ReplyKeyboardMarkup(
+    new KeyboardButton[][]
+    {
+                        new KeyboardButton[] { "Включить/отключить авторассылку" },
+                        new KeyboardButton[] { "Добавить новый сценарий"},
+                        new KeyboardButton[] { "Удалить сценарий", "В главное меню" },
+                        new KeyboardButton[] { "Список сценариев", "Скрыть меню"},
+    }
+    )
         {
             ResizeKeyboard = true
         };
@@ -47,8 +60,6 @@ namespace UniShedule.Telegram
                                     }
         });
 
-        public string usage = "Использование:\n" +
-                                     "/openmenu   - открыть главное меню\n" +
-                                     "/closemenu   - закрыть главное меню\n";
+        public string usage = "Использование:\nОткрыть главное меню:\n/openmenu\nОткрыть меню авторассылки:\n/switchreminder\n/Закрыть меню:\n/closemenu";
     }
 }

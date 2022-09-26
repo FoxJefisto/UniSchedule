@@ -25,11 +25,6 @@ namespace UniShedule.Database
             }
         }
 
-        public void TruncateAllTables()
-        {
-            //TODO: Доделать удаление таблицы
-        }
-
         private ScheduleFetcher()
         {
             api = MpeiApi.GetInstance();

@@ -25,6 +25,8 @@ namespace Telegram.Bot.Examples.Echo
         {
             SetGroupName,
             SetDate,
+            AddReminder,
+            DeleteReminder,
             None
         };
 
@@ -90,13 +92,23 @@ namespace Telegram.Bot.Examples.Echo
                 {
                     action = (message.Text) switch
                     {
+                        //Команды
                         "/openmenu" => OpenMainMenu(botClient, message),
+                        "/switchreminder" => SwitchReminder(botClient, message),
                         "/closemenu" => CloseMainMenu(botClient, message),
+                        //Главное меню
                         "Показать расписание на сегодня" => GetTodaySchedule(botClient, message),
                         "Задать название группы" => SetGroupName(botClient, message),
                         "Показать расписание в определенный день" => SetDate(botClient, message),
+                        "Создать авторассылку" => SetReminder(botClient, message),
                         "Список загруженных групп" => GetGroups(botClient, message),
                         "Скрыть меню" => CloseMainMenu(botClient, message),
+                        //Меню авторассылки
+                        "Включить/отключить авторассылку" => SwitchReminder(botClient, message),
+                        "Добавить новый сценарий" => AddingNewReminder(botClient, message),
+                        "Удалить сценарий" => DeletingReminder(botClient, message),
+                        "Список сценариев" => GetReminders(botClient, message),
+                        "В главное меню" => OpenMainMenu(botClient, message),
                         _ => Usage(botClient, message)
                     };
                 }
@@ -106,6 +118,8 @@ namespace Telegram.Bot.Examples.Echo
                     {
                         UserCommands.SetGroupName => SaveGroupName(botClient, message),
                         UserCommands.SetDate => GetSchedule(botClient, message),
+                        UserCommands.AddReminder => AddNewReminder(botClient, message),
+                        UserCommands.DeleteReminder => DeleteReminder(botClient, message),
                         _ => Usage(botClient, message)
                     };
                 }
@@ -138,7 +152,7 @@ namespace Telegram.Bot.Examples.Echo
         static async Task<Message> CloseMainMenu(ITelegramBotClient botClient, Message message)
         {
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                                        text: "Открыть меню: /openmenu",
+                                                        text: "Открыть главное меню:\n/openmenu\nОткрыть меню авторассылки:\n/switchreminder",
                                                         replyMarkup: new ReplyKeyboardRemove());
         }
 
@@ -146,7 +160,7 @@ namespace Telegram.Bot.Examples.Echo
         {
             var user = await dbManager.GetUserInfoAsync(message.From.Id);
             user.UserCommand = UserCommands.SetGroupName.ToString();
-            await dbManager.ChangeUserInfo(user);
+            await dbManager.ChangeUserInfoAsync(user);
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                                         text: "Введите название группы",
                                                         replyMarkup: impControls.ikmShowGroups);
@@ -170,9 +184,16 @@ namespace Telegram.Bot.Examples.Echo
         {
             var user = await dbManager.GetUserInfoAsync(message.From.Id);
             user.UserCommand = UserCommands.SetDate.ToString();
-            await dbManager.ChangeUserInfo(user);
+            await dbManager.ChangeUserInfoAsync(user);
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                                         text: "Введите дату\nФорматы даты:\nдд.мм | дд.мм.гггг\nдд название_м | дд название_м гггг");
+        }
+
+        static async Task<Message> SetReminder(ITelegramBotClient botClient, Message message)
+        {
+            return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                                        text: "Настройки авторассылки",
+                                                        replyMarkup: impControls.rkmReminderMenu);
         }
 
         static async Task<Message> SaveGroupName(ITelegramBotClient botClient, Message message)
@@ -180,7 +201,7 @@ namespace Telegram.Bot.Examples.Echo
             var user = await dbManager.GetUserInfoAsync(message.From.Id);
             user.UserCommand = UserCommands.None.ToString();
             user.GroupName = message.Text.ToUpper();
-            await dbManager.ChangeUserInfo(user);
+            await dbManager.ChangeUserInfoAsync(user);
             var isCorrectGroupName = await dbManager.CheckGroupNameAsync(user.GroupName);
             if (isCorrectGroupName)
             {
@@ -201,7 +222,7 @@ namespace Telegram.Bot.Examples.Echo
         {
             var user = await dbManager.GetUserInfoAsync(message.From.Id);
             user.CurrentDate = DateTime.Today;
-            await dbManager.ChangeUserInfo(user);
+            await dbManager.ChangeUserInfoAsync(user);
             bool isCorrectGroupName = await dbManager.CheckGroupNameAsync(user.GroupName);
             if (!isCorrectGroupName)
             {
@@ -240,7 +261,7 @@ namespace Telegram.Bot.Examples.Echo
             if (lastUserCommand == UserCommands.SetDate)
             {
                 user.UserCommand = UserCommands.None.ToString();
-                await dbManager.ChangeUserInfo(user);
+                await dbManager.ChangeUserInfoAsync(user);
                 if (!DateTime.TryParse(message.Text, out var date))
                 {
                     return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
@@ -248,7 +269,7 @@ namespace Telegram.Bot.Examples.Echo
                                                             replyMarkup: impControls.rkmMainMenu);
                 }
                 user.CurrentDate = date;
-                await dbManager.ChangeUserInfo(user);
+                await dbManager.ChangeUserInfoAsync(user);
             }
 
             var lessons = await dbManager.GetCustomDateScheduleAsync(user.GroupName, user.CurrentDate);
@@ -283,6 +304,77 @@ namespace Telegram.Bot.Examples.Echo
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                             text: "Если твоей группы нет в списке, ты можешь помочь мне загрузить новые данные. Укажите ее название в меню выбора группы и следуй инструкциям.",
                                             replyMarkup: impControls.rkmMainMenu);
+        }
+
+        static async Task<Message> SwitchReminder(ITelegramBotClient botClient, Message message)
+        {
+            var user = await dbManager.GetUserInfoAsync(message.From.Id);
+            user.ReminderState = !user.ReminderState;
+            await dbManager.ChangeUserInfoAsync(user);
+            string prevState = user.ReminderState switch
+            {
+                false => "отключена",
+                true => "включена"
+            };
+            return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                            text: $"Функция {prevState}");
+        }
+
+        static async Task<Message> AddingNewReminder(ITelegramBotClient botClient, Message message)
+        {
+            var user = await dbManager.GetUserInfoAsync(message.From.Id);
+            user.UserCommand = UserCommands.AddReminder.ToString();
+            await dbManager.ChangeUserInfoAsync(user);
+            return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                                        text: "Введите время для авторассылки");
+        }
+
+        static async Task<Message> AddNewReminder(ITelegramBotClient botClient, Message message)
+        {
+            var user = await dbManager.GetUserInfoAsync(message.From.Id);
+            user.UserCommand = UserCommands.None.ToString();
+            await dbManager.ChangeUserInfoAsync(user);
+            if (!DateTime.TryParse(message.Text, out var time))
+            {
+                return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                                        text: $"Время введено в неверном формате!");
+            }
+            await dbManager.SaveReminderAsync(time);
+            await dbManager.SaveUserReminderAsync(user, time);
+            return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                            text: $"Установлено новое время для авторассылки: {time:t}");
+        }
+
+        static async Task<Message> DeletingReminder(ITelegramBotClient botClient, Message message)
+        {
+            var user = await dbManager.GetUserInfoAsync(message.From.Id);
+            user.UserCommand = UserCommands.DeleteReminder.ToString();
+            await dbManager.ChangeUserInfoAsync(user);
+            return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                                        text: "Введите время, которое хотите удалить из авторассылки");
+        }
+
+        static async Task<Message> DeleteReminder(ITelegramBotClient botClient, Message message)
+        {
+            var user = await dbManager.GetUserInfoAsync(message.From.Id);
+            user.UserCommand = UserCommands.None.ToString();
+            await dbManager.ChangeUserInfoAsync(user);
+            if (!DateTime.TryParse(message.Text, out var time))
+            {
+                return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                                        text: $"Время введено в неверном формате!");
+            }
+            var result = await dbManager.DeleteUserReminderAsync(user, time);
+            await dbManager.DeleteReminderAsync(time);
+            return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                            text: $"{result}: {time:t}");
+        }
+
+        static async Task<Message> GetReminders(ITelegramBotClient botClient, Message message)
+        {
+            var result = await dbManager.GetReminders(message.From.Id);
+            return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                text: $"Активные сценарии:\n{result}");
         }
 
         static async Task<Message> FetchNewGroup(ITelegramBotClient botClient, Message message)
@@ -329,12 +421,12 @@ namespace Telegram.Bot.Examples.Echo
             {
                 case "PrevDay":
                     user.CurrentDate = user.CurrentDate.AddDays(-1);
-                    await dbManager.ChangeUserInfo(user);
+                    await dbManager.ChangeUserInfoAsync(user);
                     action = GetSchedule(botClient, callbackQuery.Message);
                     break;
                 case "NextDay":
                     user.CurrentDate = user.CurrentDate.AddDays(1);
-                    await dbManager.ChangeUserInfo(user);
+                    await dbManager.ChangeUserInfoAsync(user);
                     action = GetSchedule(botClient, callbackQuery.Message);
                     break;
                 case "YesLoad":

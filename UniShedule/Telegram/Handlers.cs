@@ -94,17 +94,17 @@ namespace Telegram.Bot.Examples.Echo
                     {
                         //Команды
                         "/openmenu" => OpenMainMenu(botClient, message),
-                        "/switchreminder" => SwitchReminder(botClient, message),
+                        "/switchreminder" => SetReminder(botClient, message),
                         "/closemenu" => CloseMainMenu(botClient, message),
                         //Главное меню
                         "Показать расписание на сегодня" => GetTodaySchedule(botClient, message),
                         "Задать название группы" => SetGroupName(botClient, message),
                         "Показать расписание в определенный день" => SetDate(botClient, message),
-                        "Создать авторассылку" => SetReminder(botClient, message),
+                        "Меню авторассылок" => SetReminder(botClient, message),
                         "Список загруженных групп" => GetGroups(botClient, message),
                         "Скрыть меню" => CloseMainMenu(botClient, message),
                         //Меню авторассылки
-                        "Включить/отключить авторассылку" => SwitchReminder(botClient, message),
+                        "Включить/отключить авторассылки" => SwitchReminder(botClient, message),
                         "Добавить новый сценарий" => AddingNewReminder(botClient, message),
                         "Удалить сценарий" => DeletingReminder(botClient, message),
                         "Список сценариев" => GetReminders(botClient, message),
@@ -133,10 +133,7 @@ namespace Telegram.Bot.Examples.Echo
             await dbManager.SaveNewUserAsync(message);
             Console.WriteLine($"[{message.Date:G}]Пользователь {message.From.Id}-{message.From.Username} успешно зарегистрирован");
             await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                                    text: $"Привет! Я умею узнавать расписание занятий у всех групп НИУ МЭИ. Тебе всего лишь нужно указать номер группы в соответствующем меню, а всё остальное я сделаю сам) " +
-                                                    $"Пока мои знания довольно скудные. Я знаю лишь некоторые группы, о которых рассказали мне студенты. С ними ты сможешь ознакомиться в разделе 'Список загруженных групп'. " +
-                                                    $"Если твоей группы там нет - это здорово, значит у тебя появилась возможность внести свой вклад в моей развитие. " +
-                                                    $"Укажи её название в меню выбора группы и следуй дальнейшим инструкциям. После этого остается немного подождать, пока я буду обрабатывать новые данные."
+                                                    text: impControls.welcome
                                                     );
             return await Usage(botClient, message);
         }
@@ -152,7 +149,7 @@ namespace Telegram.Bot.Examples.Echo
         static async Task<Message> CloseMainMenu(ITelegramBotClient botClient, Message message)
         {
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                                        text: "Открыть главное меню:\n/openmenu\nОткрыть меню авторассылки:\n/switchreminder",
+                                                        text: "Открыть главное меню:\n/openmenu\nОткрыть меню авторассылок:\n/switchreminder",
                                                         replyMarkup: new ReplyKeyboardRemove());
         }
 
@@ -271,7 +268,13 @@ namespace Telegram.Bot.Examples.Echo
                 user.CurrentDate = date;
                 await dbManager.ChangeUserInfoAsync(user);
             }
-
+            bool isCorrectGroupName = await dbManager.CheckGroupNameAsync(user.GroupName);
+            if (!isCorrectGroupName)
+            {
+                return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                            text: $"Нет данных о группе {user.GroupName}",
+                            replyMarkup: impControls.rkmMainMenu);
+            }
             var lessons = await dbManager.GetCustomDateScheduleAsync(user.GroupName, user.CurrentDate);
             if (lessons.Count == 0)
             {

@@ -180,5 +180,17 @@ namespace UniShedule.Database
                 return await Task.Run(() => db.Groups.Select(x => x.Name).OrderBy(x => x).ToList());
             }
         }
+
+        public List<Model.User> GetUsersOnTimed()
+        {
+            using (Context db = new Context())
+            {
+                var now = DateTime.Now;
+                return db.Users.Include(d => d.Reminders)
+                    .Where(x => x.ReminderState == true &&
+                    x.Reminders.Any(y => y.RemindTime.Hour == now.Hour && y.RemindTime.Minute == now.Minute))
+                    .ToList();
+            }
+        }
     }
 }

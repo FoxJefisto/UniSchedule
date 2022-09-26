@@ -22,6 +22,7 @@ namespace UniShedule
             //db.SaveLessons(new List<string>() { "А-05-19", "А-13а-19", "А-13б-19", "А-14-19", "А-16-19" });
             //var db = Database.Database.GetInstance();
             //var list = db.GetScheduleAsync("А-05-19").GetAwaiter().GetResult();
+            Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("ru-RU");
             TelegramApi tg = TelegramApi.GetInstance();
             tg.Start();
             while (true)

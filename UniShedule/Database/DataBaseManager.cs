@@ -186,10 +186,16 @@ namespace UniShedule.Database
             using (Context db = new Context())
             {
                 var now = DateTime.Now;
-                return db.Users.Include(d => d.Reminders)
-                    .Where(x => x.ReminderState == true &&
-                    x.Reminders.Any(y => y.RemindTime.Hour == now.Hour && y.RemindTime.Minute == now.Minute))
-                    .ToList();
+                var users = db.Users.Include(d => d.Reminders).Where(x => x.ReminderState == true);
+                var usersTimed = new List<Model.User>();
+                foreach(var user in users)
+                {
+                    if (user.Reminders.Any(y => y.RemindTime.Hour == now.Hour && y.RemindTime.Minute == now.Minute))
+                    {
+                        usersTimed.Add(user);
+                    }
+                }
+                return usersTimed;
             }
         }
     }

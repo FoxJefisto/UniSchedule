@@ -50,6 +50,7 @@ namespace UniShedule.Telegram
 
         private static void OnTimedEvent(Object source, ElapsedEventArgs e)
         {
+            Console.WriteLine($"[{DateTime.Now:T}]Сработало событие таймера");
             var users = dbManager.GetUsersOnTimed();
             foreach(var user in users)
             {

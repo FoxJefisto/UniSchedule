@@ -26,6 +26,8 @@ namespace UniShedule.Telegram
 
         private static SKImageCreator imageCreator;
 
+        private static TelegramControlsImp impControls = new TelegramControlsImp();
+
         protected TelegramApi()
         {
             dbManager = DataBaseManager.GetInstance();
@@ -71,7 +73,8 @@ namespace UniShedule.Telegram
                 }
                 var result = imageCreator.PrintOneDaySchedule(lessons);
                 Bot.SendTextMessageAsync(chatId: user.Id,
-                                            text: result);
+                                            text: result,
+                                            replyMarkup: impControls.ikmDaySwitcher);
             }
         }
 

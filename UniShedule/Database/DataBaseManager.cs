@@ -166,7 +166,7 @@ namespace UniShedule.Database
             {
                 var user = await db.Users.Include(d => d.Reminders).FirstAsync(x => x.Id == Id);
                 var sb = new StringBuilder();
-                foreach (var reminder in user.Reminders)
+                foreach (var reminder in user.Reminders.OrderBy(x => x.RemindTime.Hour).ThenBy(x => x.RemindTime.Minute))
                 {
                     sb.Append($"{reminder.RemindTime:t}\n");
                 }

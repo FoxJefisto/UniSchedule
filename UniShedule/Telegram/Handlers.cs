@@ -143,7 +143,7 @@ namespace Telegram.Bot.Examples.Echo
             var id = message.From.IsBot ? message.Chat.Id : message.From.Id;
             var user = await dbManager.GetUserInfoAsync(id);
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                                        text: $"Текущая группа: {user.GroupName}\nТекущая дата: {DateTime.Today:M}",
+                                                        text: $"Текущая группа: {user.GroupName}\nТекущая дата: {DateTime.Today:M}, {DateTime.Today.DayOfWeek}",
                                                         replyMarkup: impControls.rkmMainMenu);
         }
 
@@ -333,6 +333,13 @@ namespace Telegram.Bot.Examples.Echo
         static async Task<Message> AddingNewReminder(ITelegramBotClient botClient, Message message)
         {
             var user = await dbManager.GetUserInfoAsync(message.From.Id);
+            var isCorrectGroupName = await dbManager.CheckGroupNameAsync(user.GroupName);
+            if (!isCorrectGroupName)
+            {
+                return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
+                                                        text: "Название группы не задано.\n[В главное меню]->[Задать название группы]",
+                                                        replyMarkup: impControls.getRKMReminderMenu(user));
+            }
             user.UserCommand = UserCommands.AddReminder.ToString();
             await dbManager.ChangeUserInfoAsync(user);
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,

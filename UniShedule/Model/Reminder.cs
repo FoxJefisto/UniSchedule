@@ -8,7 +8,9 @@ namespace UniShedule.Model
     class Reminder
     {
         public long Id { get; set; }
+
         public DateTime RemindTime { get; set; }
+
         public ICollection<User> Users { get; set; } = new List<User>();
     }
 }

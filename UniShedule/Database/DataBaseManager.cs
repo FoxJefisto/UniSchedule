@@ -74,6 +74,7 @@ namespace UniShedule.Database
                         Id = message.From.Id,
                         FirstName = message.From.FirstName,
                         LastName = message.From.LastName,
+                        UserName = message.From.Username,
                         CurrentDate = message.Date.Date,
                         GroupName = "",
                         UserCommand = "None",

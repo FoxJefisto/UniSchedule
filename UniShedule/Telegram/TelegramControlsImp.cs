@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using Telegram.Bot.Types.ReplyMarkups;
+using UniShedule.Model;
 
 namespace UniShedule.Telegram
 {
@@ -20,18 +21,27 @@ namespace UniShedule.Telegram
             ResizeKeyboard = true
         };
 
-        public ReplyKeyboardMarkup rkmReminderMenu = new ReplyKeyboardMarkup(
+        public ReplyKeyboardMarkup getRKMReminderMenu(User user)
+        {
+            var state = user.ReminderState switch
+            {
+                false => "Включить",
+                true => "Отключить"
+            };
+            ReplyKeyboardMarkup rkmReminderMenu = new ReplyKeyboardMarkup(
     new KeyboardButton[][]
     {
-                        new KeyboardButton[] { "Включить/отключить авторассылки" },
+                        new KeyboardButton[] { $"{state} авторассылки" },
                         new KeyboardButton[] { "Добавить новый сценарий"},
                         new KeyboardButton[] { "Удалить сценарий", "В главное меню" },
                         new KeyboardButton[] { "Список сценариев", "Скрыть меню"},
     }
     )
-        {
-            ResizeKeyboard = true
-        };
+            {
+                ResizeKeyboard = true
+            };
+            return rkmReminderMenu;
+        }
 
 
         public InlineKeyboardMarkup ikmDaySwitcher = new InlineKeyboardMarkup(new[]
@@ -57,6 +67,14 @@ namespace UniShedule.Telegram
                                     new []
                                     {
                                         InlineKeyboardButton.WithCallbackData("Группы", "ShowGroups"),
+                                    }
+        });
+
+        public InlineKeyboardMarkup ikmShowReminders = new InlineKeyboardMarkup(new[]
+                {
+                                    new []
+                                    {
+                                        InlineKeyboardButton.WithCallbackData("Активные сценарии", "ShowReminders"),
                                     }
         });
 

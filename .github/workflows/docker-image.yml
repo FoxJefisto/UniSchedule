@@ -22,5 +22,5 @@ jobs:
     - name: Login into DockerHub
       run: docker login -u ${{ env.DOCKERHUB_LOGIN }} -p ${{ env.DOCKERHUB_PASSWORD }}
     - name: Publish the docker image
-      run: docker push -a ${{ env.DOCKERHUB_LOGIN }}/unischedule-bot:latest
+      run: docker push -a ${{ env.DOCKERHUB_LOGIN }}/unischedule-bot
       

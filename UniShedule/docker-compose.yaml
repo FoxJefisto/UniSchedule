@@ -28,12 +28,17 @@ services:
 
 
   bot:
-    image: unischedule:latest    
-    container_name: unischedule
-    build:
-      context: .
+    image: foxjefisto/unischedule-bot:latest
+    container_name: unischedule-bot
     environment:
       CONNECTION_STRING: "Server=database,1433; Database=UniScheduleDB; User ID=sa; Password=Qwerty123#123!; MultipleActiveResultSets=True"
     depends_on:
       database:
         condition: service_healthy
+
+  watchtower:
+    image: containrrr/watchtower
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 30 unischedule-bot

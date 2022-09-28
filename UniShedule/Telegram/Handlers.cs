@@ -142,8 +142,18 @@ namespace Telegram.Bot.Examples.Echo
         {
             var id = message.From.IsBot ? message.Chat.Id : message.From.Id;
             var user = await dbManager.GetUserInfoAsync(id);
+            var dayOfWeek = DateTime.Now.DayOfWeek switch
+            {
+                DayOfWeek.Monday => "Понедельник",
+                DayOfWeek.Tuesday => "Вторник",
+                DayOfWeek.Wednesday => "Среда",
+                DayOfWeek.Thursday => "Четверг",
+                DayOfWeek.Friday => "Пятница",
+                DayOfWeek.Saturday => "Суббота",
+                DayOfWeek.Sunday => "Воскресенье"
+            };
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                                        text: $"Текущая группа: {user.GroupName}\nТекущая дата: {DateTime.Today:M}, {DateTime.Today.DayOfWeek}",
+                                                        text: $"Текущая группа: {user.GroupName}\nТекущая дата: {DateTime.Today:M}, {dayOfWeek}",
                                                         replyMarkup: impControls.rkmMainMenu);
         }
 

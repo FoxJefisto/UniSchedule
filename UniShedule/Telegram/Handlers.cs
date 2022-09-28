@@ -373,7 +373,7 @@ namespace Telegram.Bot.Examples.Echo
             await dbManager.ChangeUserInfoAsync(user);
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                                         text: "Введите время, которое хотите удалить из авторассылки",
-                                                        replyMarkup: new ReplyKeyboardRemove());
+                                                        replyMarkup: impControls.ikmShowReminders);
 
         }
 

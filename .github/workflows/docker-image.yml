@@ -18,7 +18,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build the Docker image
-      run: docker build ./UniShedule --file Dockerfile --tag ${{ env.DOCKERHUB_LOGIN }}/unischedule-bot:latest
+      run: docker build ./UniShedule --tag ${{ env.DOCKERHUB_LOGIN }}/unischedule-bot:latest
     - name: Login into DockerHub
       run: docker login -u ${{ env.DOCKERHUB_LOGIN }} -p ${{ env.DOCKERHUB_PASSWORD }}
     - name: Publish the docker image

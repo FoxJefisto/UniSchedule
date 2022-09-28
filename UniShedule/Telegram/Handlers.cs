@@ -161,7 +161,7 @@ namespace Telegram.Bot.Examples.Echo
             await dbManager.ChangeUserInfoAsync(user);
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                                         text: "Введите название группы",
-                                                        replyMarkup: impControls.ikmShowReminders);
+                                                        replyMarkup: impControls.ikmShowGroups);
 
         }
 
@@ -327,7 +327,8 @@ namespace Telegram.Bot.Examples.Echo
                 true => "включена"
             };
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
-                                            text: $"Функция {prevState}");
+                                            text: $"Функция {prevState}",
+                                            replyMarkup: impControls.getRKMReminderMenu(user));
         }
 
         static async Task<Message> AddingNewReminder(ITelegramBotClient botClient, Message message)

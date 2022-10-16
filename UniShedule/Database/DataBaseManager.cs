@@ -38,7 +38,7 @@ namespace UniShedule.Database
             {
                 var lessons = await db.Lessons.Include(l => l.Group).Include(l => l.Date)
                     .Where(l => l.Group.Name == groupName && l.Date.Date == DateTime.Today)
-                    .OrderBy(l => l.Date).ToListAsync();
+                    .OrderBy(l => l.Time).ToListAsync();
                 return lessons;
             }
         }
@@ -49,7 +49,7 @@ namespace UniShedule.Database
             {
                 var lessons = await db.Lessons.Include(l => l.Group).Include(l => l.Date)
                     .Where(l => l.Group.Name == groupName && l.Date.Date == date)
-                    .OrderBy(l => l.Date).ThenBy(l => l.Time).ToListAsync();
+                    .OrderBy(l => l.Time).ToListAsync();
                 return lessons;
             }
         }

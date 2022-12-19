@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1
 FROM mcr.microsoft.com/dotnet/sdk:6.0-alpine3.17 AS build-env
 WORKDIR /app
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 
 # Copy csproj and restore as distinct layers
 COPY *.csproj ./

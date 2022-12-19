@@ -14,10 +14,10 @@ namespace UniShedule.Database
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            //var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
-            //optionsBuilder.UseSqlServer(connectionString);
+            var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
+            optionsBuilder.UseSqlServer(connectionString);
 
-            optionsBuilder.UseSqlServer("Server=.\\SQLEXPRESS; DATABASE=UniSheduleDB; Trusted_Connection=True");
+            //optionsBuilder.UseSqlServer("Server=.\\SQLEXPRESS; DATABASE=UniSheduleDB; Trusted_Connection=True");
         }
 
         public DbSet<Lesson> Lessons { get; set; }

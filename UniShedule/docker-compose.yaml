@@ -4,9 +4,10 @@ services:
   database:
     image: mcr.microsoft.com/mssql/server:2019-latest
     container_name: unischedule-db
+    user: root
     environment:
       ACCEPT_EULA: "Y"
-      SA_PASSWORD: ${SA_PASSWORD}
+      MSSQL_SA_PASSWORD: "Qwerty123#123!"
       TZ: "Europe/Moscow"
       DEBIAN_FRONTEND: "noninteractive"
     volumes:
@@ -14,7 +15,7 @@ services:
     ports:
     - "1433:1433"
     healthcheck:
-      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$$SA_PASSWORD" -Q "SELECT 1" || exit 1
+      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "Qwerty123#123!" -Q "SELECT 1" || exit 1
       interval: 10s
       timeout: 3s
       retries: 10
@@ -30,7 +31,7 @@ services:
     image: foxjefisto/unischedule-bot:latest
     container_name: unischedule-bot
     environment:
-      CONNECTION_STRING: ${CONNECTION_STRING}
+      CONNECTION_STRING: "Server=database,1433; Database=UniScheduleDB; User ID=sa; Password=Qwerty123#123!; MultipleActiveResultSets=True"
     depends_on:
       database:
         condition: service_healthy

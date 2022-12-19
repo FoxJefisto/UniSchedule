@@ -9,7 +9,7 @@ namespace UniShedule.Model
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public DateInfo Date { get; set; } 
+        public DateTime Date { get; set; } 
         public string Time { get; set; }
         public string Type { get; set; }
         public string Place { get; set; }

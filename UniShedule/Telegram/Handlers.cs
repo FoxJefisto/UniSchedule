@@ -31,7 +31,7 @@ namespace Telegram.Bot.Examples.Echo
         };
 
         private static TelegramControlsImp impControls = new TelegramControlsImp();
-        private static SKImageCreator imageCreator = new SKImageCreator();
+        private static Printer imageCreator = new Printer();
         private static DataBaseManager dbManager = DataBaseManager.GetInstance();
         private static string path = "table.png";
         public static Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)

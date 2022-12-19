@@ -125,15 +125,14 @@ namespace UniShedule
                 var table = doc.DocumentNode.SelectNodes(".//table[@class='mpei-galaktika-lessons-grid-tbl']//tr");
                 var lessons = new List<Lesson>();
                 var lesson = new Lesson();
-                var dateInfo = new DateInfo();
+                DateTime date = default;
                 string lessonTime = null;
                 foreach (var row in table)
                 {
                     var rowDate = row.SelectSingleNode("./td[@class='mpei-galaktika-lessons-grid-date']");
                     if (rowDate != null)
                     {
-                        dateInfo = ParseDate(rowDate.InnerText, currentDate);
-                        currentDate = dateInfo.Date.Date;
+                        date = ParseDate(rowDate.InnerText, currentDate);
                         continue;
                     }
 
@@ -149,7 +148,7 @@ namespace UniShedule
                         lesson = new Lesson();
                         lesson.Time = lessonTime;
                         lesson.Group = group;
-                        lesson.Date = dateInfo;
+                        lesson.Date = date;
                         var rowLessonName = row.SelectSingleNode(".//span[@class='mpei-galaktika-lessons-grid-name']");
                         if (rowLessonName != null)
                         {
@@ -187,20 +186,9 @@ namespace UniShedule
             }
         }
 
-        private DateInfo ParseDate(string rowInfo, DateTime currentDate)
+        private DateTime ParseDate(string rowInfo, DateTime currentDate)
         {
             var matchDate = Regex.Match(rowInfo, @"([А-Яа-я]+), (\d+) ([А-Яа-я]+)");
-            var dateName = matchDate.Groups[1].Value switch
-            {
-                "Пн" => "Понедельник",
-                "Вт" => "Вторник",
-                "Ср" => "Среда",
-                "Чт" => "Четверг",
-                "Пт" => "Пятница",
-                "Сб" => "Суббота",
-                "Вс" => "Воскресенье",
-                _ => null
-            };
             int month = matchDate.Groups[3].Value switch
             {
                 "января" => 1,
@@ -221,11 +209,7 @@ namespace UniShedule
             if (currentDate.Month == 12 && month == 1)
                 year++;
             var date = new DateTime(year, month, day);
-            return new DateInfo
-            {
-                Date = date,
-                DateWeekName = dateName
-            };
+            return date;
         }
 
         private string GetHTMLString(string url)

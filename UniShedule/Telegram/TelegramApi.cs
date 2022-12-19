@@ -24,14 +24,14 @@ namespace UniShedule.Telegram
 
         private static DataBaseManager dbManager;
 
-        private static SKImageCreator imageCreator;
+        private static Printer imageCreator;
 
         private static TelegramControlsImp impControls = new TelegramControlsImp();
 
         protected TelegramApi()
         {
             dbManager = DataBaseManager.GetInstance();
-            imageCreator = new SKImageCreator();
+            imageCreator = new Printer();
             SetTimer();
         }
 
@@ -67,7 +67,7 @@ namespace UniShedule.Telegram
                 if (lessons.Count == 0)
 {
                     Bot.SendTextMessageAsync(chatId: user.Id,
-                                            text: $"{user.CurrentDate:M} занятий нет)");
+                                            text: $"{DateTime.Today:M} занятий нет)");
                     continue;
 
                 }

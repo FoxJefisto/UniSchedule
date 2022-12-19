@@ -7,7 +7,7 @@ services:
     container_name: unischedule-db
     environment:
       ACCEPT_EULA: "Y"
-      SA_PASSWORD: "Qwerty123#123!"
+      SA_PASSWORD:
       TZ: "Europe/Moscow"
       DEBIAN_FRONTEND: "noninteractive"
     volumes:
@@ -31,7 +31,7 @@ services:
     image: foxjefisto/unischedule-bot:latest
     container_name: unischedule-bot
     environment:
-      CONNECTION_STRING: "Server=database,1433; Database=UniScheduleDB; User ID=sa; Password=Qwerty123#123!; MultipleActiveResultSets=True"
+      CONNECTION_STRING:
     depends_on:
       database:
         condition: service_healthy

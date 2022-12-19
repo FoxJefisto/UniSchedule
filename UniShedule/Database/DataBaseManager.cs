@@ -27,7 +27,7 @@ namespace UniShedule.Database
         {
             using (Context db = new Context())
             {
-                var lessons = await db.Lessons.Include(l => l.Group).Include(l => l.Date).Where(l => l.Group.Name == groupName).OrderBy(l => l.Date).ToListAsync();
+                var lessons = await db.Lessons.Include(l => l.Group).Where(l => l.Group.Name == groupName).OrderBy(l => l.Date).ToListAsync();
                 return lessons;
             }
         }
@@ -36,8 +36,8 @@ namespace UniShedule.Database
         {
             using (Context db = new Context())
             {
-                var lessons = await db.Lessons.Include(l => l.Group).Include(l => l.Date)
-                    .Where(l => l.Group.Name == groupName && l.Date.Date == DateTime.Today)
+                var lessons = await db.Lessons.Include(l => l.Group)
+                    .Where(l => l.Group.Name == groupName && l.Date == DateTime.Today)
                     .OrderBy(l => l.Time).ToListAsync();
                 return lessons;
             }
@@ -47,8 +47,8 @@ namespace UniShedule.Database
         {
             using (Context db = new Context())
             {
-                var lessons = await db.Lessons.Include(l => l.Group).Include(l => l.Date)
-                    .Where(l => l.Group.Name == groupName && l.Date.Date == date)
+                var lessons = await db.Lessons.Include(l => l.Group)
+                    .Where(l => l.Group.Name == groupName && l.Date == date)
                     .OrderBy(l => l.Time).ToListAsync();
                 return lessons;
             }
@@ -75,7 +75,7 @@ namespace UniShedule.Database
                         FirstName = message.From.FirstName,
                         LastName = message.From.LastName,
                         UserName = message.From.Username,
-                        CurrentDate = message.Date.Date,
+                        CurrentDate = message.Date,
                         GroupName = "",
                         UserCommand = "None",
                         ReminderState = false

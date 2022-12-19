@@ -24,7 +24,7 @@ namespace UniShedule.Telegram
                 DayOfWeek.Sunday => "Воскресенье",
                 _ => ""
             };
-            str.Append($"{dateOfWeek}, {lessons.First().Date.Date:M}\n");
+            str.Append($"{dateOfWeek}, {dateOfWeek:M}\n");
             foreach (var lesson in lessons)
             {
                 str.Append($"{new string('-', 20)}\n");

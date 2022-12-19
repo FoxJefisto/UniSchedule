@@ -1,7 +1,6 @@
 # syntax=docker/dockerfile:1
-FROM mcr.microsoft.com/dotnet/sdk:6.0-alpine3.17 AS build-env
+FROM mcr.microsoft.com/dotnet/sdk:3.1 AS build-env
 WORKDIR /app
-ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 
 # Copy csproj and restore as distinct layers
 COPY *.csproj ./
@@ -12,7 +11,7 @@ COPY . .
 RUN dotnet publish -c Release -o out
 
 # Build runtime image
-FROM mcr.microsoft.com/dotnet/runtime:6.0-alpine3.17
+FROM mcr.microsoft.com/dotnet/runtime:3.1
 ENV TZ="Europe/Moscow"
 ENV DEBIAN_FRONTEND="noninteractive"
 WORKDIR /app

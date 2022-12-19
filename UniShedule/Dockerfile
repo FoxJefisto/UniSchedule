@@ -14,12 +14,13 @@ RUN dotnet publish -c Release -o out
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/runtime:3.1-alpine
 WORKDIR /app
+RUN apk update
+RUN apk upgrade
+RUN apk add ca-certificates && update-ca-certificates
+RUN apk add --no-cache icu-libs tzdata
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 ENV TZ="Europe/Moscow"
 ENV DEBIAN_FRONTEND="noninteractive"
 ENV DOTNET_RUNNING_IN_CONTAINER=true
-RUN apk add --no-cache icu-libs krb5-libs libgcc libintl libssl1.1 libstdc++ zlib
-RUN apk add --no-cache alpine-conf && \
-    setup-timezone -z Europe/Moscow
-ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 COPY --from=build-env /app/out .
 ENTRYPOINT ["dotnet", "UniShedule.dll"]

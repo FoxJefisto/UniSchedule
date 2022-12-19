@@ -2,6 +2,8 @@ name: Docker Image CI
 env:
   DOCKERHUB_LOGIN: ${{ secrets.DOCKERHUB_LOGIN }}
   DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+  CONNECTION_STRING: ${{ secrets.CONNECTION_STRING }}
+  SA_PASSWORD: ${{ secrets.SA_PASSWORD }}
 
 on:
   push:
@@ -17,6 +19,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Add Connection String to docker-compose.yaml
+      run: sed -i 's/CONNECTION_STRING:/${{ env.CONNECTION_STRING }}' ./UniShedule/docker-compose.yaml
+    - name: Add password to docker-compose.yaml
+      run: sed -i 's/SA_PASSWORD:/${{ env.SA_PASSWORD }}' ./UniShedule/docker-compose.yaml
     - name: Build the Docker image
       run: docker build ./UniShedule --tag ${{ env.DOCKERHUB_LOGIN }}/unischedule-bot:latest
     - name: Login into DockerHub

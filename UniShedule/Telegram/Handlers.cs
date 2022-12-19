@@ -142,7 +142,7 @@ namespace Telegram.Bot.Examples.Echo
         {
             var id = message.From.IsBot ? message.Chat.Id : message.From.Id;
             var user = await dbManager.GetUserInfoAsync(id);
-            var dayOfWeek = DateTime.Now.DayOfWeek switch
+            var dayOfWeek = DateTime.Today.DayOfWeek switch
             {
                 DayOfWeek.Monday => "Понедельник",
                 DayOfWeek.Tuesday => "Вторник",

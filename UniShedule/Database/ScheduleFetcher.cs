@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace UniShedule.Database
@@ -17,11 +18,14 @@ namespace UniShedule.Database
 
         public void SaveLessons(string groupName)
         {
-            var lessons = api.GetAllLessons(groupName);
             using (Context db = new Context())
             {
-                db.Lessons.AddRange(lessons);
-                db.SaveChanges();
+                if(!db.Groups.Any(x => x.Name == groupName))
+                {
+                    var lessons = api.GetAllLessons(groupName);
+                    db.Lessons.AddRange(lessons);
+                    db.SaveChanges();
+                }
             }
         }
 

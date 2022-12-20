@@ -1,21 +1,14 @@
-﻿using Microsoft.VisualBasic.CompilerServices;
-using System;
-using System.IO;
-using System.Linq;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.InlineQueryResults;
-using Telegram.Bot.Types.InputFiles;
 using Telegram.Bot.Types.ReplyMarkups;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using UniShedule.Telegram;
 using UniShedule.Database;
-using System.IO.Pipes;
 using System.Text;
-using UniShedule.Model;
 
 namespace Telegram.Bot.Examples.Echo
 {
@@ -33,7 +26,7 @@ namespace Telegram.Bot.Examples.Echo
         private static TelegramControlsImp impControls = new TelegramControlsImp();
         private static Printer imageCreator = new Printer();
         private static DataBaseManager dbManager = DataBaseManager.GetInstance();
-        private static string path = "table.png";
+        private static readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
         public static Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
         {
             var ErrorMessage = exception switch
@@ -304,14 +297,6 @@ namespace Telegram.Bot.Examples.Echo
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                         text: result,
                                         replyMarkup: impControls.ikmDaySwitcher);
-            //var skData = imageCreator.DrawOneDaySchedule(lessons);
-            //imageCreator.SaveImage(skData, path);
-            //using (var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
-            //{
-            //    return await botClient.SendPhotoAsync(chatId: message.Chat.Id,
-            //                            photo: new InputOnlineFile(fileStream),
-            //                            replyMarkup: impControls.ikmDaySwitcher);
-            //}
         }
 
         static async Task<Message> GetGroups(ITelegramBotClient botClient, Message message)
@@ -413,15 +398,17 @@ namespace Telegram.Bot.Examples.Echo
 
         static async Task<Message> FetchNewGroup(ITelegramBotClient botClient, Message message)
         {
+
             var user = await dbManager.GetUserInfoAsync(message.Chat.Id);
             var loadingGroupName = user.GroupName;
-            Console.WriteLine($"Началась загрузка группы {loadingGroupName}");
             await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                             text: $"Началась загрузка группы {loadingGroupName}. Я оповещу вас, когда она завершится",
                                             replyMarkup: impControls.rkmMainMenu);
             var fetcher = ScheduleFetcher.GetInstance();
+            await _semaphore.WaitAsync();
             try
             {
+                Console.WriteLine($"Началась загрузка группы {loadingGroupName}");
                 await Task.Run(() => fetcher.SaveLessons(loadingGroupName));
             }
             catch (ArgumentException ex)
@@ -429,6 +416,10 @@ namespace Telegram.Bot.Examples.Echo
                 return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,
                                             text: $"{ex.Message}",
                                             replyMarkup: impControls.rkmMainMenu);
+            }
+            finally
+            {
+                _semaphore.Release();
             }
             Console.WriteLine($"[{DateTime.Now:G}] Загрзука группы {loadingGroupName} завершена");
             return await botClient.SendTextMessageAsync(chatId: message.Chat.Id,

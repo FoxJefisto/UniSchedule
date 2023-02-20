@@ -3,12 +3,9 @@
 </p>
 
 <p align="center">
-    <img src="https://img.shields.io/github/watchers/FoxJefisto/UniSchedule
-?style=social" alt="watchers">
-    <img src="https://img.shields.io/github/last-commit/FoxJefisto/UniSchedule
-" alt="last commit">
-    <img src="https://img.shields.io/github/repo-size/FoxJefisto/UniSchedule
-" alt=repo-size">
+    <img src="https://img.shields.io/github/watchers/FoxJefisto/UniSchedule?style=social" alt="watchers">
+    <img src="https://img.shields.io/github/last-commit/FoxJefisto/UniSchedule" alt="last commit">
+    <img src="https://img.shields.io/github/repo-size/FoxJefisto/UniSchedule" alt=repo-size">
 </p>
 
 ## About

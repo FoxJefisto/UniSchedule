@@ -23,6 +23,8 @@ The project consists of four dockers:
 •	контейнер с базой данных
 •	контейнер watchtower
 
+### Usage
+Telegram bot link: https://t.me/MPEIst_bot
 
 ## Screenshots
 
